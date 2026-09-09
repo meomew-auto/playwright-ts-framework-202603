@@ -52,6 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    permissions:
+      contents: read
+      actions: read
+
     # ─────────────────────────────────────────────────────────────
     # GitHub Environment — secrets ăn theo environment
     # Repo Settings → Environments → development / uat
@@ -111,13 +115,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Finding previous run with history artifact..."
-          PREV_RUN=$(gh run list --workflow=playwright.yml --status=completed --limit=5 --json databaseId -q '.[0].databaseId')
-          echo "Previous run ID: $PREV_RUN"
           mkdir -p playwright-report
+          PREV_RUN=$(gh run list --workflow=playwright.yml --status=success --limit=5 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo "")
+          echo "Previous run ID: ${PREV_RUN:-'(none)'}"
           if [ -n "$PREV_RUN" ]; then
-            gh run download $PREV_RUN --name smart-report-history --dir playwright-report 2>/dev/null && echo "Downloaded history from run $PREV_RUN!" || echo "No history artifact in run $PREV_RUN"
+            gh run download "$PREV_RUN" --name smart-report-history --dir playwright-report 2>/dev/null && echo "Downloaded history from run $PREV_RUN!" || echo "No history artifact in run $PREV_RUN"
           else
-            echo "No previous completed runs found"
+            echo "No previous successful runs found with history"
           fi
 
       # ─────────────────────────────────────────────────────────────
