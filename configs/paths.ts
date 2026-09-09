@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 
 /**
@@ -23,11 +24,23 @@ export const Paths = {
   /** Thư mục chứa fixtures & setups: src/infrastructure/fixtures */
   fixtures: (...segments: string[]) => path.resolve(ROOT_DIR, 'src/infrastructure/fixtures', ...segments),
 
-  /** Thư mục báo cáo kiểm thử: playwright-report */
-  reports: (...segments: string[]) => path.resolve(ROOT_DIR, 'playwright-report', ...segments),
+  /** Thư mục báo cáo kiểm thử: playwright-report (tự động đảm bảo thư mục tồn tại trên CI) */
+  reports: (...segments: string[]) => {
+    const reportDir = path.resolve(ROOT_DIR, 'playwright-report');
+    if (!fs.existsSync(reportDir)) {
+      fs.mkdirSync(reportDir, { recursive: true });
+    }
+    return path.resolve(reportDir, ...segments);
+  },
 
-  /** Thư mục lưu trữ auth storage state: .auth */
-  auth: (...segments: string[]) => path.resolve(ROOT_DIR, '.auth', ...segments),
+  /** Thư mục lưu trữ auth storage state: .auth (tự động đảm bảo thư mục tồn tại) */
+  auth: (...segments: string[]) => {
+    const authDir = path.resolve(ROOT_DIR, '.auth');
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+    return path.resolve(authDir, ...segments);
+  },
 
   /** Thư mục test data & assets: src/infrastructure/data */
   data: (...segments: string[]) => path.resolve(ROOT_DIR, 'src/infrastructure/data', ...segments),

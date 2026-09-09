@@ -103,6 +103,24 @@ jobs:
         run: npx playwright install-deps chromium
 
       # ─────────────────────────────────────────────────────────────
+      # 📊 Reports — Chuẩn bị thư mục & nạp lịch sử trước khi chạy
+      # ─────────────────────────────────────────────────────────────
+      - name: 📥 Download Previous History
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Finding previous run with history artifact..."
+          PREV_RUN=$(gh run list --workflow=playwright.yml --status=completed --limit=5 --json databaseId -q '.[0].databaseId')
+          echo "Previous run ID: $PREV_RUN"
+          mkdir -p playwright-report
+          if [ -n "$PREV_RUN" ]; then
+            gh run download $PREV_RUN --name smart-report-history --dir playwright-report 2>/dev/null && echo "Downloaded history from run $PREV_RUN!" || echo "No history artifact in run $PREV_RUN"
+          else
+            echo "No previous completed runs found"
+          fi
+
+      # ─────────────────────────────────────────────────────────────
       # 🧪 Run Tests — Dynamic command builder
       # ─────────────────────────────────────────────────────────────
       - name: 🧪 Run Playwright tests
@@ -136,27 +154,12 @@ jobs:
           eval $CMD
 
       # ─────────────────────────────────────────────────────────────
-      # 📊 Reports — Smart Reporter + Playwright HTML
+      # 📤 Upload Artifacts — Smart Reporter + Playwright HTML
       # ─────────────────────────────────────────────────────────────
-      - name: 📥 Download Previous History
-        if: always()
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "Finding previous run with history artifact..."
-          PREV_RUN=$(gh run list --workflow=playwright.yml --status=completed --limit=5 --json databaseId -q '.[0].databaseId')
-          echo "Previous run ID: $PREV_RUN"
-          mkdir -p playwright-report
-          if [ -n "$PREV_RUN" ]; then
-            gh run download $PREV_RUN --name smart-report-history --dir playwright-report 2>/dev/null && echo "Downloaded history from run $PREV_RUN!" || echo "No history artifact in run $PREV_RUN"
-          else
-            echo "No previous completed runs found"
-          fi
-
       - name: 📤 Upload Smart Report History
         uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: smart-report-history
           path: playwright-report/test-history.json
