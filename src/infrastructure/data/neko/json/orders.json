@@ -1,0 +1,38 @@
+{
+  "pendingOrder": {
+    "description": "Đơn hàng đang chờ xử lý hoặc bị hủy trên bảng Admin",
+    "data": {
+      "orderCode": "#B2C-SEED-0100",
+      "customerName": "Ngô Thị K",
+      "email": "ngothik@gmail.com",
+      "phone": "0912345678",
+      "totalAmount": "150.000đ",
+      "status": "Đã hủy",
+      "createdAt": "10/02/2026 14:20"
+    }
+  },
+  "deliveredOrder": {
+    "description": "Đơn hàng thực tế đã giao thành công mục tiêu kiểm thử E2E",
+    "data": {
+      "orderCode": "#B2C-20260210-4528",
+      "customerName": "A | aaa | aa@gmail.com",
+      "email": "aa@gmail.com",
+      "phone": "0987654321",
+      "totalAmount": "380.000đ",
+      "status": "Đã giao hàng",
+      "createdAt": "10/02/2026 21:06"
+    }
+  },
+  "highValueOrder": {
+    "description": "Đơn hàng giá trị cao cho khách hàng VIP Platinum",
+    "data": {
+      "orderCode": "#B2C-VIP-9999",
+      "customerName": "Trần Platinum",
+      "email": "vip_platinum@nekocoffee.com",
+      "phone": "0909999999",
+      "totalAmount": "1.250.000đ",
+      "status": "Đang xử lý",
+      "createdAt": "07/09/2026 09:30"
+    }
+  }
+}

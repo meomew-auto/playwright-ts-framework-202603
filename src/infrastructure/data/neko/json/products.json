@@ -1,0 +1,35 @@
+{
+  "arabicaBeans": {
+    "description": "Sản phẩm cà phê hạt Arabica Cầu Đất nguyên chất",
+    "data": {
+      "id": 285,
+      "name": "Arabica Cầu Đất Đặc Biệt",
+      "type": "bean",
+      "price": 280000,
+      "stockStatus": "in_stock",
+      "origin": "Đà Lạt, Lâm Đồng",
+      "roastLevel": "Medium"
+    }
+  },
+  "espressoMachine": {
+    "description": "Thiết bị máy pha cà phê chuyên nghiệp bán tự động",
+    "data": {
+      "id": 105,
+      "name": "Máy Pha Cà Phê Espresso Neko Pro",
+      "type": "equipment",
+      "price": 12500000,
+      "stockStatus": "in_stock",
+      "warrantyMonths": 24
+    }
+  },
+  "v60Filter": {
+    "description": "Phụ kiện phễu lọc cà phê thủy tinh V60",
+    "data": {
+      "id": 88,
+      "name": "Phễu Lọc Thủy Tinh V60 Neko",
+      "type": "accessory",
+      "price": 350000,
+      "stockStatus": "in_stock"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "playwright-ts-framework-202603",
+  "version": "1.0.0",
+  "description": "Enterprise Clean Architecture Playwright TypeScript Framework with Hybrid Testing & Network Interception",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:dev": "cross-env NODE_ENV=development npx playwright test",
+    "test:uat": "cross-env NODE_ENV=uat npx playwright test",
+    "typecheck": "tsc --noEmit",
+    "test:neko:network": "cross-env NODE_ENV=development npx playwright test --project=neko-network",
+    "test:neko:hybrid": "cross-env NODE_ENV=development npx playwright test --project=neko-hybrid",
+    "test:neko:api": "cross-env NODE_ENV=development npx playwright test --project=neko-setup --project=neko-api",
+    "test:neko:ui": "cross-env NODE_ENV=development npx playwright test --project=neko-setup --project=neko-ui",
+    "test:neko:all": "cross-env NODE_ENV=development npx playwright test --project=neko-network --project=neko-hybrid --project=neko-setup --project=neko-api --project=neko-ui",
+    "test:cms": "cross-env NODE_ENV=development npx playwright test --project=cms-setup --project=cms-desktop",
+    "test:cms:mobile": "cross-env NODE_ENV=development npx playwright test --project=cms-setup --project=cms-mobile",
+    "test:cms:uat": "cross-env NODE_ENV=uat npx playwright test --project=cms-setup --project=cms-desktop",
+    "test:neko": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.neko.config.ts",
+    "test:cms:config": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.cms.config.ts",
+    "test:api:fast": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.api.config.ts",
+    "test:cross-browser": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.cross-browser.config.ts",
+    "test:firefox": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.cross-browser.config.ts --project=firefox",
+    "test:webkit": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.cross-browser.config.ts --project=webkit",
+    "test:mobile": "cross-env NODE_ENV=development npx playwright test --config=configs/playwright.cross-browser.config.ts --project=mobile-safari --project=mobile-chrome",
+    "report": "npx playwright show-report ./playwright-report/html",
+    "report:smart": "npx playwright-smart-reporter-serve ./playwright-report/smart-report.html"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "clean-architecture",
+    "hybrid-testing",
+    "network-interception"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^24.10.1",
+    "cross-env": "^10.1.0",
+    "playwright-smart-reporter": "^2.2.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "dotenv-flow": "^4.1.0",
+    "winston": "^3.19.0",
+    "zod": "^3.23.8"
+  }
+}

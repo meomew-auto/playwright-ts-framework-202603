@@ -1,0 +1,36 @@
+{
+  "arabicaSpecial": {
+    "description": "Payload API tạo sản phẩm Arabica Cầu Đất đặc biệt",
+    "data": {
+      "name": "Arabica Cầu Đất Đặc Biệt 2026",
+      "type": "bean",
+      "price_per_unit": 280000,
+      "unit_type": "kg",
+      "origin": "Đà Lạt, Lâm Đồng",
+      "roast_level": "Medium",
+      "description": "Cà phê Arabica Cầu Đất hái chín 100%, hương vị thanh tao"
+    }
+  },
+  "espressoMachinePro": {
+    "description": "Payload API tạo máy pha cà phê Espresso chuyên nghiệp",
+    "data": {
+      "name": "Máy Pha Cà Phê Espresso Neko Pro 2026",
+      "type": "equipment",
+      "price_per_unit": 12500000,
+      "unit_type": "piece",
+      "origin": "Ý",
+      "description": "Máy pha cà phê chuyên nghiệp công suất lớn cho quán"
+    }
+  },
+  "v60Dripper": {
+    "description": "Payload API tạo phễu lọc V60 thủy tinh chịu nhiệt",
+    "data": {
+      "name": "Phễu Lọc Thủy Tinh V60 Neko",
+      "type": "accessory",
+      "price_per_unit": 350000,
+      "unit_type": "piece",
+      "origin": "Nhật Bản",
+      "description": "Phễu lọc V60 thủy tinh cao cấp chuẩn barista"
+    }
+  }
+}

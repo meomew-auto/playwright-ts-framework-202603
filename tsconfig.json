@@ -1,0 +1,66 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      // Core aliases
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@presentation/*": ["src/presentation/*"],
+      "@auth": ["src/infrastructure/auth/index.ts"],
+      "@auth/*": ["src/infrastructure/auth/*"],
+      
+      // Fixtures - per project
+      "@fixtures/common/*": ["src/infrastructure/fixtures/common/*"],
+      "@fixtures/cms": ["src/infrastructure/fixtures/cms"],
+      "@fixtures/cms/*": ["src/infrastructure/fixtures/cms/*"],
+      "@fixtures/neko": ["src/infrastructure/fixtures/neko"],
+      "@fixtures/neko/*": ["src/infrastructure/fixtures/neko/*"],
+      
+      // UI layer (Pages & Components)
+      "@ui/*": ["src/infrastructure/ui/*"],
+      "@pages/base/*": ["src/infrastructure/ui/pages/base/*"],
+      "@pages/cms/*": ["src/infrastructure/ui/pages/cms/*"],
+      "@pages/neko/*": ["src/infrastructure/ui/pages/neko-coffee/*"],
+      
+      // Helpers - common + per project
+      "@helpers": ["src/infrastructure/helpers"],
+      "@helpers/common": ["src/infrastructure/helpers/common"],
+      "@helpers/common/*": ["src/infrastructure/helpers/common/*"],
+      "@helpers/cms": ["src/infrastructure/helpers/cms"],
+      "@helpers/cms/*": ["src/infrastructure/helpers/cms/*"],
+      
+      // Collection helpers (shortcut)
+      "@collection/*": ["src/infrastructure/helpers/common/collection/*"],
+      
+      // Utils
+      "@utils/*": ["src/infrastructure/utils/*"],
+      
+      // API Clients & Schemas
+      "@clients": ["src/infrastructure/api/clients"],
+      "@clients/*": ["src/infrastructure/api/clients/*"],
+      "@schemas/common/*": ["src/infrastructure/api/schemas/common/*"],
+      "@schemas/neko": ["src/infrastructure/api/schemas/neko"],
+      "@schemas/neko/*": ["src/infrastructure/api/schemas/neko/*"],
+      
+      // Components - per project
+      "@components/cms/*": ["src/infrastructure/ui/components/cms/*"],
+      
+      // Data - universal & per project
+      "@data": ["src/infrastructure/data/index.ts"],
+      "@data/*": ["src/infrastructure/data/*"],
+      "@data/common/*": ["src/infrastructure/data/common/*"],
+      "@data/cms/*": ["src/infrastructure/data/cms/*"],
+      "@data/neko/*": ["src/infrastructure/data/neko/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
+
