@@ -30,7 +30,7 @@ import { APIRequestContext } from '@playwright/test';
 import { EnvManager } from '@utils/EnvManager';
 import { Logger } from '@utils/Logger';
 import { BaseAuthProvider } from '../BaseAuthProvider';
-import { extractUserFromToken, isTokenValid } from '../jwt.utils';
+import { extractUserFromToken } from '../jwt.utils';
 import { getLocalStorageValue } from '../storage-state.utils';
 import type { RoleCredentials, LoginResult, StorageState } from '../auth.types';
 

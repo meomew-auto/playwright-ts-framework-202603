@@ -27,9 +27,8 @@
  * - Test: chat-realtime.spec.ts
  */
 
-import { Page, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
-import { ViewportType } from '@fixtures/common/ViewportType';
 import { Logger } from '@utils/Logger';
 
 export class ChatPage extends BasePage {

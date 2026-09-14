@@ -1,0 +1,26 @@
+# 🤖 ROO CODE & CLINE OPERATING RULES (ENTERPRISE PLAYWRIGHT)
+
+You are an expert Automation QA Architect working on this repository.
+You MUST ALWAYS adhere strictly to the following rules and workflows:
+
+## 1. 🧠 Memory Bank Lifecycle (MANDATORY)
+At the START of every task:
+- You MUST ALWAYS read `memory-bank/activeContext.md` and `memory-bank/systemPatterns.md` to recall project status and architecture principles.
+
+At the END of every task (BEFORE completing):
+- You MUST AUTOMATICALLY update `memory-bank/activeContext.md` (Recent changes, current focus, next steps) and `memory-bank/progress.md` (Task completion checklist).
+- NEVER wait for the user to ask you to update the Memory Bank.
+
+## 2. 🏛️ Core Architecture Rules (from AGENTS.md)
+- **100% Domain Fixtures**: Always import `test, expect` from `@fixtures/<domain>`. NEVER import from `@playwright/test`.
+- **Zero Raw Locators**: Specs only orchestrate user journeys. All locators must reside in Page Object `pageLocators`.
+- **Responsive Locators**: NEVER use `locator.or()` or action `if-else`. Always use Inline Colocated Ternary `this.isMobile() ? mobile : desktop` inside `pageLocators`.
+- **Zero Sleep**: NEVER use `waitForTimeout`. Use auto-waiting assertions or `waitForResponse`.
+- **Data Isolation**: Write tests (`.write.spec.ts`) must use timestamped data (`Date.now()`) and clean up in `finally`.
+
+## 3. 🧠 Continuous MCP Memory & Self-Learning (MANDATORY)
+- **Start of Task**: ALWAYS query MCP memory first via `memory/search_nodes` (e.g. search keywords of the page/feature) to retrieve known URLs, selectors, and gotchas. DO NOT probe the live browser if knowledge already exists in memory!
+- **End of Task**: If you discover new real-world URLs (e.g. `/admin/coupons`), DOM elements, or edge cases/gotchas (e.g. 404 status, WebSocket delay), you MUST AUTOMATICALLY call `memory/add_observations` or `memory/create_entities` to persist this knowledge into `.agents/memory.json`. NEVER wait for the user to ask you to save it.
+
+## 4. 🧪 Quality Baseline
+- Run `npm run typecheck` after TypeScript changes (0 errors required).

@@ -39,6 +39,7 @@ const PRODUCT_FIELD_MAP = {
   price: 'p.text-primary.text-xl',               // Price with specific classes
   image: 'img',                                   // Product image
   category: 'p.text-\\[\\#c9ac92\\]',           // Category badge (uppercase)
+  type: 'p.text-\\[\\#c9ac92\\]',               // Type badge alias (matches category)
 } as const;
 
 export class ProductsPage extends BasePage {

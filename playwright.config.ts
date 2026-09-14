@@ -106,45 +106,6 @@ export default createPlaywrightConfig({
       },
       dependencies: ['cms-setup'],
     },
-
-    // ──────────────────────────────────────────────────────────
-    // 🌐 4. CROSS-BROWSER ENGINES (Ma trận trình duyệt đầy đủ)
-    // ──────────────────────────────────────────────────────────
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewportType: 'desktop' as const,
-      },
-    },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewportType: 'desktop' as const,
-      },
-    },
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        viewportType: 'desktop' as const,
-      },
-    },
-    {
-      name: 'mobile-safari',
-      use: {
-        ...devices['iPhone 12'],
-        viewportType: 'mobile' as const,
-      },
-    },
-    {
-      name: 'edge',
-      use: {
-        ...devices['Desktop Edge'],
-        channel: 'msedge',
-        viewportType: 'desktop' as const,
-      },
-    },
   ],
 });
+

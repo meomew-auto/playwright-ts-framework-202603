@@ -30,14 +30,10 @@
  * - Dùng: ViewportType (responsive), Logger (debug), BootstrapSelectHelper (CMS)
  */
 import { Locator, Page, expect } from '@playwright/test';
-import { BootstrapSelectHelper } from '@helpers/cms/BootstrapSelectHelper';
 import { ViewportType } from '@fixtures/common/ViewportType';
 import { Logger } from '@utils/Logger';
 
 export abstract class BasePage {
-  // Bootstrap Select helper (CMS-specific, but commonly used)
-  protected helpers: BootstrapSelectHelper;
-  
   // Viewport type for responsive locators
   protected viewportType: ViewportType;
 
@@ -45,14 +41,29 @@ export abstract class BasePage {
   public testLabel: string = '';
 
   constructor(public readonly page: Page, viewportType: ViewportType = 'desktop') {
-    this.helpers = new BootstrapSelectHelper(page);
     this.viewportType = viewportType;
+  }
+
+  // Viewport breakpoint (subclasses có thể override theo domain, ví dụ: 768 cho Bootstrap)
+  protected mobileBreakpoint: number = 1024;
+
+  /** Kiểm tra xem viewport hiện tại có phải mobile không (hỗ trợ cả fixture viewportType và dynamic viewportSize) */
+  public isMobile(): boolean {
+    if (this.viewportType === 'mobile') return true;
+    const size = this.page.viewportSize();
+    if (size && size.width < this.mobileBreakpoint) return true;
+    return false;
+  }
+
+  /** Kiểm tra xem viewport hiện tại có phải desktop không */
+  public isDesktop(): boolean {
+    return !this.isMobile();
   }
 
   /** Prefix cho log messages — e.g. `[TC_02] [📱 Mobile] ` hoặc `[TC_02] [🖥️ Desktop] ` */
   protected get logPrefix(): string {
     const label = this.testLabel ? `[${this.testLabel}] ` : '';
-    const viewport = this.viewportType === 'mobile' ? '[📱 Mobile] ' : '[🖥️ Desktop] ';
+    const viewport = this.isMobile() ? '[📱 Mobile] ' : '[🖥️ Desktop] ';
     return `${label}${viewport}`;
   }
 
@@ -501,7 +512,7 @@ export abstract class BasePage {
    * await this.navigateTo('https://example.com/page');
    * ```
    */
-  protected async navigateTo(path: string, options?: Parameters<Page['goto']>[1]) {
+  public async navigateTo(path: string, options?: Parameters<Page['goto']>[1]) {
     Logger.ui(`${this.logPrefix}📍 Navigate to ${path}`);
     await this.page.goto(path, options);
   }

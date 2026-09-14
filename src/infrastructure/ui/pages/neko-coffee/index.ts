@@ -8,3 +8,4 @@ export {
   type OrderColumnKey as NekoAdminOrderColumnKey,
 } from "./NekoAdminOrdersPage";
 export * from "./NekoAdminProductsPage";
+export * from "./NekoHeaderNavigationPage";

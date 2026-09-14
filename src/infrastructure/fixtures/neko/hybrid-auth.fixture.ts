@@ -55,6 +55,12 @@ export interface HybridAuthTestFixtures {
 
   // Browser Page được tiêm sẵn phiên Admin từ RAM (0ms)
   adminPage: Page;
+
+  /** BrowserContext độc lập sạch 100%, không bị tiêm token hay script của Staff từ RAM */
+  guestContext: import("@playwright/test").BrowserContext;
+
+  /** Page sạch bóng dành cho kiểm thử Form Login hoặc luồng Khách vãng lai (Zero Auth) */
+  guestPage: Page;
 }
 
 export interface HybridAuthWorkerFixtures {
@@ -307,5 +313,17 @@ export const hybridAuth = base.extend<
     const page = await context.newPage();
     await use(page);
     await context.close();
+  },
+
+  // ── 9. PHIÊN TRÌNH DUYỆT KHÁCH VÃNG LAI ĐỘC LẬP (GUEST / CLEAN SESSION) ──
+  guestContext: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    await use(context);
+    await context.close();
+  },
+
+  guestPage: async ({ guestContext }, use) => {
+    const page = await guestContext.newPage();
+    await use(page);
   },
 });

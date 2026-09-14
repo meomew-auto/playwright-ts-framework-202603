@@ -1,60 +1,8 @@
 /**
- * ============================================================================
- * TEST: CMS QUẢN LÝ SẢN PHẨM — Mutating Tests (Edit, Delete)
- * ============================================================================
- *
- * 🎯 MỤC ĐÍCH:
- * Test các thao tác thay đổi dữ liệu: edit, delete, bulk delete sản phẩm.
- * Các tests này thay đổi dữ liệu → PHẢI chạy tuần tự (serial mode).
- *
- * ════════════════════════════════════════════════════════════════════════════
- * 📐 PATTERNS & METHODS SỬ DỤNG TỪ PAGE OBJECTS
- * ════════════════════════════════════════════════════════════════════════════
- *
- * 1️⃣ ROW ACTIONS (từ CMSAllProductsPage)
- *    - editProduct(name)               → click Edit trên dropdown action
- *    - deleteProduct(name)             → click Delete + confirm dialog
- *    - viewProduct(name)               → click View
- *    - bulkDeleteProducts([names])     → select nhiều + bulk delete
- *
- * 2️⃣ TABLE DATA METHODS
- *    - getFirstProductName()           → lấy tên sản phẩm đầu tiên
- *    - getColumnValues('name')         → lấy tất cả giá trị 1 cột
- *    - getDefaultTableData()           → lấy dữ liệu tất cả cột mặc định
- *    - findRowByFilters({...})         → tìm dòng theo nhiều bộ lọc
- *
- * 3️⃣ PAGINATION
- *    - getTestTargetFromNextPage()     → tìm product ở trang kế để test cross-page
- *    - findRowByFiltersAcrossPages()   → tìm dòng qua nhiều trang
- *
- * 4️⃣ CHECKBOX
- *    - toggleRowCheckboxByName(name, true/false) → bật/tắt checkbox dòng
- *
- * ⚠️ LƯU Ý:
- * - Không dùng fixture `page` trực tiếp — luôn thao tác qua `allProductsPage`
- * - URL assertions dùng `allProductsPage.page` (kế thừa từ BasePage)
- * - Không đặt raw locator trong test — mọi locator nằm trong Page Object
- *
- * ════════════════════════════════════════════════════════════════════════════
- * ⚠️ TẠI SAO PHẢI DÙNG SERIAL MODE?
- * ════════════════════════════════════════════════════════════════════════════
- *
- * File này chứa mutating tests (edit, delete) → PHẢI serial vì:
- *
- * 1. DATA CONFLICT: Các TC dùng chung data (getFirstProductName)
- *    - TC_05 delete product A → TC_01 cố edit product A → fail
- *    - TC_06 bulk delete → TC_02 getDefaultTableData() → empty
- *
- * 2. TABLE STATE: rows.count() là imperative (không retry)
- *    → Nếu table đang re-render do TC khác navigate → count = 0
- *
- * 3. MUỐN PARALLEL CHO DELETE?
- *    → Mỗi TC phải tự tạo product riêng (setup → action → verify)
- *    → Nhưng tốn thêm thời gian setup mỗi TC
- *    → Serial đơn giản hơn và đủ nhanh (45s cho 8 TC)
+ * CMS Quản Lý Sản Phẩm — Mutating Tests (Edit, Delete) (@write @crud)
+ * Lưu ý: Chạy serial mode để kiểm soát trạng thái dữ liệu khi chỉnh sửa và xóa sản phẩm.
  */
 import { test, expect } from '@fixtures/cms';
-import { createProductWithDiscount } from '@data/cms/ProductDataFactory';
 import { Logger } from '@utils/Logger';
 
 test.describe('CMS Quản Lý Sản Phẩm', () => {
@@ -122,77 +70,84 @@ test.describe('CMS Quản Lý Sản Phẩm', () => {
     Logger.info('✅ Đã điều hướng tới trang edit');
   });
 
-  test('TC_05: Xóa một sản phẩm - deleteProduct()', async ({ allProductsPage }) => {
-    const firstProductName = await allProductsPage.getFirstProductName();
-    expect(firstProductName).toBeTruthy();
-    Logger.info(`🎯 Target: "${firstProductName}"`);
+  test('TC_05: Xóa một sản phẩm - deleteProduct()', async ({ allProductsPage, addNewProductPage }) => {
+    const targetName = `Auto PW Del ${Date.now()}`;
+    await addNewProductPage.goto();
+    await addNewProductPage.fillBasicProductInfo({
+      name: targetName,
+      unit: 'Pc',
+      minQty: 1,
+      unitPrice: 150,
+      quantity: 5,
+    });
+    await addNewProductPage.savePublish();
+    Logger.info(`🎯 Đã tạo sản phẩm riêng để xóa: "${targetName}"`);
 
     // Verify sản phẩm tồn tại trước khi xóa
-    const productNamesBefore = await allProductsPage.getColumnValues('name');
-    const existsBefore = productNamesBefore.some((name) => name.includes(firstProductName));
-    expect(existsBefore).toBe(true);
+    await allProductsPage.expectProductExists(targetName);
 
     // Select checkbox rồi xóa
-    await allProductsPage.toggleRowCheckboxByName(firstProductName, true);
-    await allProductsPage.deleteProduct(firstProductName);
+    await allProductsPage.toggleRowCheckboxByName(targetName, true);
+    await allProductsPage.deleteProduct(targetName);
 
-    // Verify kết quả
-    const productNamesAfter = await allProductsPage.getColumnValues('name');
-    const existsAfter = productNamesAfter.some((name) => name.includes(firstProductName));
-    Logger.info(`📊 Sản phẩm còn tồn tại sau xóa: ${existsAfter}`);
+    // Verify kết quả sau xóa: KHÔNG còn tồn tại (R02: Hậu kiểm thực tế)
+    await allProductsPage.expectProductNotExists(targetName);
+    Logger.info(`✅ Xác nhận sản phẩm "${targetName}" đã biến mất sau khi xóa`);
   });
 
-  test('TC_06: Xóa hàng loạt - bulkDeleteProducts()', async ({ allProductsPage }) => {
-    const productNames = await allProductsPage.getColumnValues('name');
-    expect(productNames.length).toBeGreaterThan(0);
+  test('TC_06: Xóa hàng loạt - bulkDeleteProducts()', async ({ allProductsPage, addNewProductPage }) => {
+    const timestamp = Date.now();
+    const product1 = `Auto Bulk A ${timestamp}`;
+    const product2 = `Auto Bulk B ${timestamp}`;
+    const productsToDelete = [product1, product2];
 
-    const productsToDelete = productNames.slice(0, Math.min(2, productNames.length));
-    Logger.info(`🎯 Sẽ xóa ${productsToDelete.length} sản phẩm: ${productsToDelete.join(', ')}`);
+    for (const name of productsToDelete) {
+      await addNewProductPage.goto();
+      await addNewProductPage.fillBasicProductInfo({
+        name,
+        unit: 'Pc',
+        minQty: 1,
+        unitPrice: 200,
+        quantity: 10,
+      });
+      await addNewProductPage.savePublish();
+    }
+    Logger.info(`🎯 Đã tạo 2 sản phẩm riêng: ${productsToDelete.join(', ')}`);
 
     // Verify tất cả tồn tại trước khi xóa
-    const productNamesBefore = await allProductsPage.getColumnValues('name');
-    productsToDelete.forEach((productName) => {
-      const exists = productNamesBefore.some((name) => name.includes(productName));
-      expect(exists).toBe(true);
-    });
+    for (const name of productsToDelete) {
+      await allProductsPage.expectProductExists(name);
+    }
 
     // Bulk delete
     await allProductsPage.bulkDeleteProducts(productsToDelete);
 
-    // Verify kết quả
-    const productNamesAfter = await allProductsPage.getColumnValues('name');
-    productsToDelete.forEach((productName) => {
-      const exists = productNamesAfter.some((name) => name.includes(productName));
-      Logger.info(`📊 "${productName}" còn tồn tại: ${exists}`);
-    });
+    // Verify kết quả: Cả 2 đều không còn tồn tại (R02: Hậu kiểm thực tế)
+    for (const name of productsToDelete) {
+      await allProductsPage.expectProductNotExists(name);
+    }
+    Logger.info('✅ Xác nhận toàn bộ sản phẩm bulk delete đã biến mất');
   });
 
   test('TC_07: Edit sản phẩm từ trang khác - cross-page edit', async ({ allProductsPage }) => {
     const targetProduct = await allProductsPage.getTestTargetFromNextPage();
-
-    if (!targetProduct) {
-      Logger.info('⏭️ Bỏ qua test: Không đủ dữ liệu');
-      return;
-    }
+    test.skip(!targetProduct, 'Bỏ qua test: Không đủ dữ liệu ở trang tiếp theo');
 
     Logger.info(`🎯 Target: "${targetProduct}"`);
-    await allProductsPage.editProduct(targetProduct);
+    await allProductsPage.editProduct(targetProduct!);
     await expect(allProductsPage.page).toHaveURL(/\/admin\/products\/.*\/edit/);
     Logger.info('✅ Đã edit thành công');
   });
 
   test('TC_08: Xóa sản phẩm từ trang khác - cross-page delete', async ({ allProductsPage }) => {
     const targetProduct = await allProductsPage.getTestTargetFromNextPage();
-
-    if (!targetProduct) {
-      Logger.info('⏭️ Bỏ qua test: Không đủ dữ liệu');
-      return;
-    }
+    test.skip(!targetProduct, 'Bỏ qua test: Không đủ dữ liệu ở trang tiếp theo');
 
     Logger.info(`🎯 Target: "${targetProduct}"`);
 
-    await allProductsPage.toggleRowCheckboxByName(targetProduct, true);
-    await allProductsPage.deleteProduct(targetProduct);
-    Logger.info('✅ Đã xóa thành công');
+    await allProductsPage.toggleRowCheckboxByName(targetProduct!, true);
+    await allProductsPage.deleteProduct(targetProduct!);
+    await allProductsPage.expectProductNotExists(targetProduct!);
+    Logger.info('✅ Đã xóa thành công và xác nhận hậu kiểm');
   });
 });

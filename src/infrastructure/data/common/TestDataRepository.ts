@@ -38,6 +38,8 @@
 import products from '../cms/json/products.json' with { type: 'json' };
 import productsDev from '../cms/json/products-dev.json' with { type: 'json' };
 import login from '../cms/json/login.json' with { type: 'json' };
+import nekoOrders from '../neko/json/orders.json' with { type: 'json' };
+import nekoProducts from '../neko/json/products.json' with { type: 'json' };
 
 // ============================================================
 // 📐 TYPE DEFINITIONS
@@ -88,9 +90,11 @@ type DataCatalog = Record<string, Record<string, DataEntry>>;
  * 📌 Thêm JSON mới: import file → thêm vào object này → tự động có autocomplete.
  */
 export const testDataCatalog = {
-  products,     // namespace 'products'    → products.json
-  productsDev,  // namespace 'productsDev' → products-dev.json
-  login,        // namespace 'login'       → login.json
+  products,     // namespace 'products'     → cms/json/products.json
+  productsDev,  // namespace 'productsDev'  → cms/json/products-dev.json
+  login,        // namespace 'login'        → cms/json/login.json
+  nekoOrders,   // namespace 'nekoOrders'   → neko/json/orders.json
+  nekoProducts, // namespace 'nekoProducts' → neko/json/products.json
 } as const satisfies DataCatalog;
 
 // ============================================================

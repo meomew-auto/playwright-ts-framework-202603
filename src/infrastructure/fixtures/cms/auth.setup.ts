@@ -26,7 +26,7 @@ import { cmsAuth } from '@auth/cms/CMSAuthProvider';
 import { CMSLoginPage } from '@pages/cms/CMSLoginPage';
 import { Logger } from '@utils/Logger';
 
-setup('CMS eCommerce Authentication', async ({ page }) => {
+setup('CMS eCommerce Authentication', async ({ browser }) => {
   // Check if storage state is still valid
   if (cmsAuth.isStorageStateValid('admin')) {
     Logger.info('Storage state valid, skipping login', { context: 'setup' });
@@ -36,11 +36,15 @@ setup('CMS eCommerce Authentication', async ({ page }) => {
   // Login via UI and save storage state
   Logger.info('Logging in via UI...', { context: 'setup' });
   
-  const loginPage = new CMSLoginPage(page);
-  await cmsAuth.loginViaUI(page, 'admin', loginPage);
+  const page = await browser.newPage();
+  try {
+    const loginPage = new CMSLoginPage(page);
+    await cmsAuth.loginViaUI(page, 'admin', loginPage);
 
-  // Verify không bị redirect về login
-  expect(page.url()).not.toContain('/login');
-  
-  Logger.info('Authentication complete', { context: 'setup' });
+    // Verify không bị redirect về login
+    expect(page.url()).not.toContain('/login');
+    Logger.info('Authentication complete', { context: 'setup' });
+  } finally {
+    await page.close();
+  }
 });

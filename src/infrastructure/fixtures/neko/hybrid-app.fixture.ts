@@ -5,6 +5,7 @@ import { NekoAdminProductsPage } from "@pages/neko/NekoAdminProductsPage";
 import { OrdersPage } from "@pages/neko/OrdersPage";
 import { ProductsPage } from "@pages/neko/ProductsPage";
 import { ChatPage } from "@pages/neko/ChatPage";
+import { NekoHeaderNavigationPage } from "@pages/neko/NekoHeaderNavigationPage";
 
 /**
  * ════════════════════════════════════════════════════════════════════════════
@@ -17,23 +18,33 @@ import { ChatPage } from "@pages/neko/ChatPage";
  * 4. ordersPage: Trang quản lý đơn hàng theo TableResolver & CollectionHelper
  * 5. productsPage: Trang sản phẩm
  * 6. chatPage: Trang chat realtime đa tài khoản
+ * 7. headerNavPage: Thanh điều hướng Header Responsive (Desktop vs Mobile)
  */
 
 export interface HybridAppFixtures {
   loginPage: NekoLoginPage;
+  guestLoginPage: NekoLoginPage;
   adminOrdersPage: NekoAdminOrdersPage;
   adminProductsPage: NekoAdminProductsPage;
   ordersPage: OrdersPage;
   productsPage: ProductsPage;
   chatPage: ChatPage;
+  headerNavPage: NekoHeaderNavigationPage;
 }
 
 export const hybridAppFixtures = {
   loginPage: async (
-    { page }: { page: Page },
+    { guestPage, page }: { guestPage?: Page; page: Page },
     use: (r: NekoLoginPage) => Promise<void>,
   ) => {
-    await use(new NekoLoginPage(page));
+    // Ưu tiên sử dụng guestPage sạch bóng để không bị auto-redirect do Staff Token
+    await use(new NekoLoginPage(guestPage || page));
+  },
+  guestLoginPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoLoginPage) => Promise<void>,
+  ) => {
+    await use(new NekoLoginPage(guestPage || page));
   },
   adminOrdersPage: async (
     { page }: { page: Page },
@@ -64,6 +75,12 @@ export const hybridAppFixtures = {
     use: (r: ChatPage) => Promise<void>,
   ) => {
     await use(new ChatPage(page));
+  },
+  headerNavPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoHeaderNavigationPage) => Promise<void>,
+  ) => {
+    await use(new NekoHeaderNavigationPage(guestPage || page));
   },
 };
 

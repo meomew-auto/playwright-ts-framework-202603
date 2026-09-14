@@ -2,8 +2,6 @@ import {
   hybridAuth,
   type HybridAuthTestFixtures,
   type HybridAuthWorkerFixtures,
-  type NekoUserDto,
-  type WorkerStaffSnapshot,
 } from "./hybrid-auth.fixture";
 import {
   hybridServicesFixtures,

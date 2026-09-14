@@ -85,15 +85,18 @@ export const baseConfig: PlaywrightTestConfig<CustomTestOptions> = {
 /**
  * Hàm trợ giúp tạo cấu hình con có kế thừa chuẩn mực (Factory Pattern)
  */
-export function createPlaywrightConfig<T = CustomTestOptions>(
-  overrides: PlaywrightTestConfig<T>
-): PlaywrightTestConfig<T> {
-  return defineConfig<T>({
-    ...baseConfig,
-    ...overrides,
+export function createPlaywrightConfig<T = CustomTestOptions, W = {}>(
+  overrides: PlaywrightTestConfig<T, W>
+): PlaywrightTestConfig<CustomTestOptions & T, W> {
+  const { use: baseUse, ...baseRest } = baseConfig;
+  const { use: overrideUse, ...overrideRest } = overrides;
+
+  return defineConfig({
+    ...baseRest,
+    ...overrideRest,
     use: {
-      ...baseConfig.use,
-      ...overrides.use,
+      ...baseUse,
+      ...overrideUse,
     },
-  });
+  }) as unknown as PlaywrightTestConfig<CustomTestOptions & T, W>;
 }

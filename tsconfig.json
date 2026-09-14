@@ -16,18 +16,20 @@
       "@auth": ["src/infrastructure/auth/index.ts"],
       "@auth/*": ["src/infrastructure/auth/*"],
       
-      // Fixtures - per project
+      // Fixtures - dynamic wildcard + per project
       "@fixtures/common/*": ["src/infrastructure/fixtures/common/*"],
       "@fixtures/cms": ["src/infrastructure/fixtures/cms"],
       "@fixtures/cms/*": ["src/infrastructure/fixtures/cms/*"],
       "@fixtures/neko": ["src/infrastructure/fixtures/neko"],
       "@fixtures/neko/*": ["src/infrastructure/fixtures/neko/*"],
+      "@fixtures/*": ["src/infrastructure/fixtures/*", "src/infrastructure/fixtures/*/index.ts"],
       
-      // UI layer (Pages & Components)
+      // UI layer (Pages & Components) - dynamic wildcard + per project
       "@ui/*": ["src/infrastructure/ui/*"],
       "@pages/base/*": ["src/infrastructure/ui/pages/base/*"],
       "@pages/cms/*": ["src/infrastructure/ui/pages/cms/*"],
       "@pages/neko/*": ["src/infrastructure/ui/pages/neko-coffee/*"],
+      "@pages/*": ["src/infrastructure/ui/pages/*"],
       
       // Helpers - common + per project
       "@helpers": ["src/infrastructure/helpers"],
@@ -42,12 +44,14 @@
       // Utils
       "@utils/*": ["src/infrastructure/utils/*"],
       
-      // API Clients & Schemas
+      // API Clients & Services & Schemas - dynamic wildcard + per project
       "@clients": ["src/infrastructure/api/clients"],
       "@clients/*": ["src/infrastructure/api/clients/*"],
+      "@services/*": ["src/infrastructure/api/services/*"],
       "@schemas/common/*": ["src/infrastructure/api/schemas/common/*"],
       "@schemas/neko": ["src/infrastructure/api/schemas/neko"],
       "@schemas/neko/*": ["src/infrastructure/api/schemas/neko/*"],
+      "@schemas/*": ["src/infrastructure/api/schemas/*"],
       
       // Components - per project
       "@components/cms/*": ["src/infrastructure/ui/components/cms/*"],
@@ -60,7 +64,7 @@
       "@data/neko/*": ["src/infrastructure/data/neko/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "configs/**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules"]
 }
 

@@ -15,7 +15,7 @@
  * Thay vào đó, verify đăng nhập thành công bằng URL.
  */
 
-import { test, expect } from '@fixtures/cms';
+import { test } from '@fixtures/cms';
 import { getTestData } from '@data/common/TestDataRepository';
 
 // Reset storage để đảm bảo mỗi test chạy sạch sẽ (chưa đăng nhập)

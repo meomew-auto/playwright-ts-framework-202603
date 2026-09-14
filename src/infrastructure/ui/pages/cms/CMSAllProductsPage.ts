@@ -183,16 +183,6 @@ export class CMSAllProductsPage extends BaseTablePage {
   }
 
   /**
-   * Lấy giá trị name từ cell (xử lý DOM phức tạp: image + text)
-   */
-  private async getNameFromCell(cell: Locator): Promise<string> {
-    const nameText = await cell.locator('span.text-muted').textContent().catch(() => null);
-    if (nameText) return nameText.trim();
-    const raw = (await cell.textContent()) || '';
-    return raw.trim();
-  }
-
-  /**
    * Lấy giá trị checkbox từ cell (Yes/No)
    */
   private async getCheckboxValue(cell: Locator, selector = 'input[type="checkbox"]'): Promise<string> {
@@ -370,8 +360,26 @@ export class CMSAllProductsPage extends BaseTablePage {
   }
 
   /**
+   * Helper nội bộ: Quay về trang đầu tiên nếu chưa ở trang đầu.
+   */
+  private async goToFirstPageHelper(): Promise<void> {
+    const page1Item = this.page.locator('.aiz-pagination .pagination .page-item').filter({ hasText: /^1$/ });
+    if (await page1Item.count() > 0) {
+      const isActive = await page1Item.first().evaluate((el) => el.classList.contains('active')).catch(() => false);
+      if (!isActive) {
+        const link = page1Item.first().locator('a');
+        if (await link.count() > 0) {
+          await this.clickWithLog(link);
+          await this.waitForTableReady();
+          this.resetCollectionCache();
+        }
+      }
+    }
+  }
+
+  /**
    * Tìm row đầu tiên khớp với filters qua nhiều trang
-   * Tự động: về trang đầu → detect tổng trang → scan tất cả
+   * Tự động: về trang đầu → detect tổng trang → scan tất cả hoặc tối đa options.maxPages
    * @returns { row, pageNumber } — row Locator + trang tìm thấy
    */
   async findRowByFiltersAcrossPages(
@@ -379,15 +387,16 @@ export class CMSAllProductsPage extends BaseTablePage {
     options?: { maxPages?: number }
   ): Promise<{ row: Locator; pageNumber: number }> {
     const helper = await this.ensureCollectionHelper();
-    const result = await helper.findItemWithNextPage(
+    const result = await helper.findItemByFiltersWithNextPage(
       () => this.getTableRowsLocator(),
-      Object.keys(filters)[0],
-      Object.values(filters)[0],
+      filters,
       {
         getTotalPages: () => this.getMaxPagesHelper(),
         goToNextPage: async () => { await this.goToNextPageHelper(); },
+        goToFirstPage: async () => { await this.goToFirstPageHelper(); },
       },
-      this.fieldCleaners
+      this.fieldCleaners,
+      options
     );
     return { row: result.item, pageNumber: result.pageNumber };
   }
@@ -486,6 +495,24 @@ export class CMSAllProductsPage extends BaseTablePage {
     // → Không dùng expectHidden(dialog) vì DOM context cũ bị destroy
     await this.page.waitForLoadState('networkidle');
     await this.waitForTableReady();
+  }
+
+  /**
+   * Xác nhận sản phẩm tồn tại trong danh sách (qua search)
+   */
+  async expectProductExists(productName: string) {
+    await this.search(productName);
+    const names = await this.getColumnValues('name');
+    expect(names.some((name) => name.includes(productName))).toBe(true);
+  }
+
+  /**
+   * Xác nhận sản phẩm KHÔNG còn tồn tại trong danh sách (qua search)
+   */
+  async expectProductNotExists(productName: string) {
+    await this.search(productName);
+    const names = await this.getColumnValues('name');
+    expect(names.some((name) => name.includes(productName))).toBe(false);
   }
 
   /**

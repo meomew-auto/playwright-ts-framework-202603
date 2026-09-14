@@ -21,6 +21,8 @@ import { Paths } from './paths';
 
 export default createPlaywrightConfig({
   testDir: Paths.tests(),
+  testMatch: ['**/04-ui/**/*.spec.ts', '**/*.mobile.spec.ts'],
+  testIgnore: ['**/*.write.spec.ts', '**/03-api/**', '**/01-network-interception/**', '**/02-hybrid-e2e/**'],
 
   projects: [
     // ──────────────────────────────────────────────────────────

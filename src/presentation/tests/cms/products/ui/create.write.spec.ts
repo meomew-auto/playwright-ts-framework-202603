@@ -1,85 +1,6 @@
 /**
- * ============================================================================
- * TEST: CMS THÊM SẢN PHẨM MỚI
- * ============================================================================
- *
- * 🎯 MỤC ĐÍCH:
- * Test form tạo sản phẩm mới tại /admin/products/create
- *
- * ════════════════════════════════════════════════════════════════════════════
- * 📐 PATTERNS & METHODS SỬ DỤNG TỪ PAGE OBJECTS
- * ════════════════════════════════════════════════════════════════════════════
- *
- * 1️⃣ FIXTURE INJECTION (thay vì new Page() thủ công)
- *    ┌─────────────────────────────────────────────────────────────────────┐
- *    │ test('...', async ({ addNewProductPage, dashboardPage }) => {      │
- *    │   // addNewProductPage đã tự động:                                 │
- *    │   //   - Login (authedPage fixture)                                │
- *    │   //   - Navigate đến /admin/products/create                      │
- *    │   //   - Verify trang đã load (expectOnPage)                      │
- *    │   // → Test KHÔNG cần setup gì thêm                               │
- *    │ });                                                                │
- *    └─────────────────────────────────────────────────────────────────────┘
- *
- * 2️⃣ SECTIONS.xxx.fill() — Bulk fill nhiều fields cùng lúc
- *    ┌─────────────────────────────────────────────────────────────────────┐
- *    │ // Điền nhiều fields trong 1 lần gọi                               │
- *    │ await addNewProductPage.sections.general.fill({                    │
- *    │   name: 'iPhone 15',                                               │
- *    │   category: null,  // null = chọn category đầu tiên               │
- *    │   unit: 'Pc',                                                      │
- *    │ });                                                                │
- *    │                                                                    │
- *    │ // Các section có sẵn:                                             │
- *    │ // .sections.general         → info, description, status, tax      │
- *    │ // .sections.priceAndStock   → pricing, variations, stock          │
- *    │ // .sections.filesAndMedia   → images, videos, pdf                 │
- *    │ // .sections.seo             → meta title, description, image      │
- *    │ // .sections.shipping        → COD, free shipping, flat rate       │
- *    └─────────────────────────────────────────────────────────────────────┘
- *
- * 3️⃣ FACADE METHODS — Shortcut gọi từng field (delegate xuống sections)
- *    ┌─────────────────────────────────────────────────────────────────────┐
- *    │ // Thay vì: addNewProductPage.sections.shipping.toggleCashOnDel... │
- *    │ await addNewProductPage.toggleCashOnDelivery(true);                │
- *    │ await addNewProductPage.toggleFeatured(true);                      │
- *    │ // Dùng khi chỉ cần thao tác 1-2 fields riêng lẻ                  │
- *    └─────────────────────────────────────────────────────────────────────┘
- *
- * 4️⃣ ELEMENT() — Truy cập locator để assert
- *    ┌─────────────────────────────────────────────────────────────────────┐
- *    │ // Lấy locator từ pageLocators đã khai báo trong Page Object       │
- *    │ await expect(addNewProductPage.element('productNameInput'))        │
- *    │   .toHaveValue('iPhone 15');                                       │
- *    │ await expect(addNewProductPage.element('featuredCheckbox'))        │
- *    │   .toBeChecked();                                                  │
- *    └─────────────────────────────────────────────────────────────────────┘
- *
- * 5️⃣ DATA SOURCES — 2 cách tạo test data
- *    ┌─────────────────────────────────────────────────────────────────────┐
- *    │ // Factory: random data mỗi lần chạy (Faker.js)                   │
- *    │ const data = createMinimalProductInfo();                           │
- *    │                                                                    │
- *    │ // Schema/Repository: data cố định từ JSON file                    │
- *    │ const data = getTestData('products', 'minimal');                   │
- *    └─────────────────────────────────────────────────────────────────────┘
- *
- * ════════════════════════════════════════════════════════════════════════════
- * ⚠️ LƯU Ý VỀ PARALLEL & SERIAL
- * ════════════════════════════════════════════════════════════════════════════
- *
- * CÓ THỂ CHẠY PARALLEL: Mỗi TC tạo product MỚI (tên unique từ Factory/Schema)
- * → Không conflict data giữa các workers.
- *
- * VỀ savePublish():
- * - KHÔNG assert successAlert (toast auto-dismiss sau ~3s, miss qua navigation)
- * - Assert bằng expect(page).toHaveURL() — URL redirect là state vĩnh viễn
- * - Chi tiết debugging: xem JSDoc của savePublish() trong CMSAddNewProductPage
- *
- * VỀ CMS DEMO SERVER:
- * - Server demo có thể chậm khi 6 workers đồng thời
- * - Nếu fail intermittent: tăng timeout trong savePublish() hoặc dùng serial
- * - Dùng serial: test.describe.configure({ mode: 'serial' })
+ * CMS Thêm sản phẩm mới (@write @crud)
+ * Kiểm thử quy trình tạo sản phẩm từ form UI, kiểm chứng trong bảng sản phẩm và dọn dẹp data.
  */
 import { test } from '@fixtures/cms';
 import { createMinimalProductInfo, createFullProductInfo, createProductWithDiscount } from '@data/cms/ProductDataFactory';
@@ -92,7 +13,7 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     await addNewProductPage.expectOnPage();
   });
 
-  test('TC_02: Điền thông tin sản phẩm cơ bản (Factory)', async ({ addNewProductPage }) => {
+  test('TC_02: Điền thông tin sản phẩm cơ bản (Factory)', async ({ addNewProductPage, allProductsPage }) => {
     const productData = createMinimalProductInfo();
 
     // Fill basic required fields
@@ -125,10 +46,19 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     // Save product
     await addNewProductPage.savePublish();
 
+    // R08: Xác nhận sản phẩm thực sự xuất hiện trong danh sách
+    await allProductsPage.expectProductExists(productData.name);
+
+    // R01: Cleanup sản phẩm do test tạo
+    await allProductsPage.deleteProduct(productData.name);
+    await allProductsPage.expectProductNotExists(productData.name);
   });
 
-  test('TC_03: Điền thông tin sản phẩm cơ bản (Schema)', async ({ addNewProductPage }) => {
-    const productData = getTestData('products', 'minimal');
+  test('TC_03: Điền thông tin sản phẩm cơ bản (Schema)', async ({ addNewProductPage, allProductsPage }) => {
+    // R08: Thêm timestamp để đảm bảo tên sản phẩm là unique
+    const rawData = getTestData('products', 'minimal');
+    const uniqueName = `${rawData.name} ${Date.now()}`;
+    const productData = { ...rawData, name: uniqueName };
 
     // Fill basic required fields
     await addNewProductPage.sections.general.fill({
@@ -160,9 +90,15 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     // Save product
     await addNewProductPage.savePublish();
 
+    // R08: Xác nhận sản phẩm thực sự xuất hiện trong danh sách
+    await allProductsPage.expectProductExists(productData.name);
+
+    // R01: Cleanup sản phẩm do test tạo
+    await allProductsPage.deleteProduct(productData.name);
+    await allProductsPage.expectProductNotExists(productData.name);
   });
 
-  test('TC_04: Điền đầy đủ thông tin sản phẩm (Factory)', async ({ addNewProductPage }) => {
+  test('TC_04: Điền đầy đủ thông tin sản phẩm (Factory)', async ({ addNewProductPage, allProductsPage }) => {
     const productData = createFullProductInfo();
 
     // Fill Product Information section
@@ -243,11 +179,18 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     // Save product
     await addNewProductPage.savePublish();
 
+    // R08: Xác nhận sản phẩm thực sự xuất hiện trong danh sách
+    await allProductsPage.expectProductExists(productData.name);
+
+    // R01: Cleanup sản phẩm do test tạo
+    await allProductsPage.deleteProduct(productData.name);
+    await allProductsPage.expectProductNotExists(productData.name);
   });
 
-  test('TC_05: Bật/tắt cài đặt sản phẩm', async ({ addNewProductPage }) => {
+  test('TC_05: Bật/tắt cài đặt sản phẩm', async ({ addNewProductPage, allProductsPage }) => {
+    const productName = 'Settings Product ' + Date.now();
     await addNewProductPage.sections.general.fill({
-      name: 'Settings Product ' + Date.now(),
+      name: productName,
       category: null,
       brand: null,
       unit: 'Pc',
@@ -277,9 +220,15 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     // Save product
     await addNewProductPage.savePublish();
 
+    // R08: Xác nhận sản phẩm thực sự xuất hiện trong danh sách
+    await allProductsPage.expectProductExists(productName);
+
+    // R01: Cleanup sản phẩm do test tạo
+    await allProductsPage.deleteProduct(productName);
+    await allProductsPage.expectProductNotExists(productName);
   });
 
-  test('TC_06: Cấu hình giảm giá và thuế (Factory)', async ({ addNewProductPage }) => {
+  test('TC_06: Cấu hình giảm giá và thuế (Factory)', async ({ addNewProductPage, allProductsPage }) => {
     const productData = createProductWithDiscount({
       tax: 10,
       taxType: 'Percent',
@@ -324,5 +273,11 @@ test.describe('CMS Thêm sản phẩm mới', () => {
     // Save product
     await addNewProductPage.savePublish();
 
+    // R08: Xác nhận sản phẩm thực sự xuất hiện trong danh sách
+    await allProductsPage.expectProductExists(productData.name);
+
+    // R01: Cleanup sản phẩm do test tạo
+    await allProductsPage.deleteProduct(productData.name);
+    await allProductsPage.expectProductNotExists(productData.name);
   });
 });

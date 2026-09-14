@@ -262,6 +262,22 @@ export class CollectionHelper<R extends FieldResolver = FieldResolver> {
     }
   }
 
+  /**
+   * Kiểm tra có item nào khớp toàn bộ filters không
+   */
+  async hasItemByFilters(
+    items: Locator,
+    filters: FilterCriteria,
+    cleaners?: FieldCleanerMap
+  ): Promise<boolean> {
+    try {
+      await this.findItemByFilters(items, filters, cleaners);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // CÁC METHOD PHÂN TRANG
   // ═══════════════════════════════════════════════════════════════════════════
@@ -404,6 +420,58 @@ export class CollectionHelper<R extends FieldResolver = FieldResolver> {
     throw new Error(
       `CollectionHelper: Không tìm thấy item với "${field}" khớp ${matcher} ` +
       `sau khi duyệt hết ${totalPages} trang`
+    );
+  }
+
+  /**
+   * Tìm item theo nhiều filters qua nhiều trang với phân trang thông minh
+   *
+   * @param getItems - Function trả về items locator (gọi mỗi trang)
+   * @param filters - Map các fields và matcher
+   * @param pagination - Các callback điều khiển phân trang
+   * @param cleaners - Các hàm làm sạch text (tuỳ chọn)
+   * @param options - maxPages giới hạn số trang duyệt
+   */
+  async findItemByFiltersWithNextPage(
+    getItems: () => Locator,
+    filters: FilterCriteria,
+    pagination: {
+      getTotalPages: () => Promise<number>;
+      goToNextPage: () => Promise<void>;
+      goToFirstPage?: () => Promise<void>;
+    },
+    cleaners?: FieldCleanerMap,
+    options?: { maxPages?: number }
+  ): Promise<{ item: Locator; pageNumber: number }> {
+    if (pagination.goToFirstPage) {
+      await pagination.goToFirstPage();
+    }
+
+    const totalPages = await pagination.getTotalPages();
+    const maxPagesToScan = options?.maxPages ? Math.min(options.maxPages, totalPages) : totalPages;
+    const filterDesc = Object.entries(filters)
+      .map(([field, matcher]) => `${field}=${matcher}`)
+      .join(', ');
+    Logger.ui(`🔍 Đang tìm trong tối đa ${maxPagesToScan}/${totalPages} trang với filters: ${filterDesc}`);
+
+    for (let page = 1; page <= maxPagesToScan; page++) {
+      const items = getItems();
+      const found = await this.hasItemByFilters(items, filters, cleaners);
+
+      if (found) {
+        const item = await this.findItemByFilters(items, filters, cleaners);
+        Logger.ui(`✔ Tìm thấy ở trang ${page}/${totalPages}`);
+        return { item, pageNumber: page };
+      }
+
+      if (page < maxPagesToScan) {
+        await pagination.goToNextPage();
+      }
+    }
+
+    Logger.ui(`✖ Không tìm thấy sau khi duyệt ${maxPagesToScan} trang`);
+    throw new Error(
+      `CollectionHelper: Không tìm thấy item khớp filters: ${filterDesc} sau khi duyệt ${maxPagesToScan} trang`
     );
   }
 }

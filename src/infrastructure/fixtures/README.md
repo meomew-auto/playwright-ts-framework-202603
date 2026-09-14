@@ -20,10 +20,9 @@ framework tự động khởi tạo dependencies theo đúng thứ tự.
 │                     PROJECT LAYER (cms/, neko/)                       │
 │                                                                      │
 │   ┌─────────────────────────────────────────────────────────────┐    │
-│   │ CMS (@fixtures/cms):                                        │    │
-│   │ auth.fixture ──▶ app.fixture ──▶ gatekeeper.fixture ──▶     │    │
-│   │ (authedPage)     (POMs)          (merge point)              │    │
-│   │                                  index.ts (barrel export)   │    │
+│   │ CMS (@fixtures/cms) — Super Fixture:                        │    │
+│   │ cms-auth ──▶ cms-app ──▶ cms-super-gatekeeper ──▶ index.ts  │    │
+│   │ (RAM Cookie) (POMs)      (Single Entrypoint)      (barrel)  │    │
 │   └─────────────────────────────────────────────────────────────┘    │
 │   ┌─────────────────────────────────────────────────────────────┐    │
 │   │ NEKO (@fixtures/neko) — Super Fixture Bài 24:               │    │
@@ -59,14 +58,14 @@ framework tự động khởi tạo dependencies theo đúng thứ tự.
 | `auth/jwt.utils.ts` | auth | JWT decode/validate | auth.types | NekoAuthProvider |
 | `auth/storage-state.utils.ts` | auth | File I/O cho storageState | auth.types | BaseAuthProvider |
 | `auth/BaseAuthProvider.ts` | auth | Abstract auth class | storage-state.utils | CMS/Neko AuthProvider |
-| `auth/cms/CMSAuthProvider.ts` | auth | Cookie-based auth | BaseAuthProvider | auth.setup.ts |
+| `auth/cms/CMSAuthProvider.ts` | auth | Cookie-based auth | BaseAuthProvider | cms-auth, auth.setup |
 | `auth/neko/NekoAuthProvider.ts` | auth | localStorage + Zustand auth | BaseAuthProvider | neko.setup.ts, role.fixture |
-| `common/ViewportType.ts` | common | Shared viewport type | — | auth.fixture, config |
+| `common/ViewportType.ts` | common | Shared viewport type | — | cms-auth, config |
 | `cms/auth.setup.ts` | cms | Setup project | CMSAuthProvider, CMSLoginPage | playwright.config |
-| `cms/auth.fixture.ts` | cms | authedPage + loginPage | ViewportType, CMSLoginPage | cms/app.fixture |
-| `cms/app.fixture.ts` | cms | POM fixtures (CMS) | auth.fixture (authedPage) | cms/gatekeeper |
-| `cms/gatekeeper.fixture.ts` | cms | UI merge point (CMS) | auth + app fixtures | cms/index.ts |
-| `cms/index.ts` | cms | Barrel export `@fixtures/cms` | gatekeeper, auth, app | CMS Test files |
+| `cms/cms-auth.fixture.ts` | cms | RAM Snapshot 0ms Cookie Auth | ViewportType, CMSLoginPage | cms-super-gatekeeper |
+| `cms/cms-app.fixture.ts` | cms | POM fixtures (CMS) | cms-auth (authedPage) | cms-super-gatekeeper |
+| `cms/cms-super-gatekeeper.fixture.ts` | cms | Merge Auth + App fixtures | cms-auth, cms-app | cms/index.ts |
+| `cms/index.ts` | cms | Barrel export `@fixtures/cms` | cms-super-gatekeeper | CMS Test files |
 | `neko/neko.setup.ts` | neko | Setup project | NekoAuthProvider | playwright.config |
 | `neko/hybrid-auth.fixture.ts` | neko | RAM Snapshot 0ms auth (Staff & Admin) | — | hybrid-services, super-gatekeeper |
 | `neko/hybrid-services.fixture.ts` | neko | API Services + Clients | hybrid-auth | super-gatekeeper |
@@ -74,7 +73,6 @@ framework tự động khởi tạo dependencies theo đúng thứ tự.
 | `neko/role.fixture.ts` | neko | Multi-role browser context | @auth/neko | super-gatekeeper |
 | `neko/hybrid-super-gatekeeper.fixture.ts`| neko | Merge UI + API + RAM + Roles | all neko fixtures | neko/index.ts |
 | `neko/index.ts` | neko | Barrel export `@fixtures/neko` | super-gatekeeper | Neko Test files |
-| Root `unified.fixture.ts` | root | Cross-project merge | neko/index, cms/index | Cross-project tests |
 
 ## Import Guide — Dùng File Nào?
 
@@ -82,7 +80,6 @@ framework tự động khởi tạo dependencies theo đúng thứ tự.
 |----------|-------------|---------------------|
 | **CMS UI Tests** | `@fixtures/cms` | `authedPage`, `allProductsPage`, `dashboardPage`, `addNewProductPage`, `loginPage` |
 | **Neko Tests** (UI, API, Hybrid) | `@fixtures/neko` | `productService`, `orderService`, `chatService`, `authedStaffClient`, `productsPage`, `ordersPage`, `asRole` |
-| **Cross-project Tests** | `@fixtures/unified.fixture` | Cả CMS fixtures và Neko fixtures cùng 1 lúc |
 | **Direct Playwright** | `@playwright/test` | Mocking thuần túy (`page.route`), không cần app fixtures |
 
 ## Auth Flow — CMS vs Neko
