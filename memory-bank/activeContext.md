@@ -11,6 +11,8 @@
 - Gỡ POM + spec thử nghiệm của một màn hình Admin chưa được deploy (ngoài phạm vi bài học) khỏi
   `ui/pages/neko-coffee/` và `presentation/tests/neko/04-ui/`, cùng khai báo fixture/barrel liên quan.
 - `npm run typecheck` → 0 error.
+- Đã commit + push lên `origin/main`: **`6829fe9`** (56 file, +3110/−1658) — working tree sạch,
+  `main` khớp `origin/main`.
 
 ## 💡 Quyết Định Kỹ Thuật Đã Chốt:
 - **Spec-First (RED-as-bug-evidence)**: khi tính năng chưa được deploy, KHÔNG dùng feature-guard `test.skip()`
