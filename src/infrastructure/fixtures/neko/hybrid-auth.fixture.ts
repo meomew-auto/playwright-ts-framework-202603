@@ -317,7 +317,15 @@ export const hybridAuth = base.extend<
 
   // ── 9. PHIÊN TRÌNH DUYỆT KHÁCH VÃNG LAI ĐỘC LẬP (GUEST / CLEAN SESSION) ──
   guestContext: async ({ browser }, use) => {
-    const context = await browser.newContext();
+    // 🔒 BẮT BUỘC ép `storageState` rỗng để có phiên khách THẬT SỰ sạch:
+    // Playwright >= 1.63 tự động tiêm `_combinedContextOptions` (kế thừa `test.use()`,
+    // bao gồm cả `storageState`) vào MỌI `browser.newContext()` gọi thủ công
+    // (xem node_modules/playwright/lib/index.js → runBeforeCreateBrowserContext).
+    // Không ép ⇒ "guest context" vẫn dính token của `.auth/<domain>-admin.json`
+    // và mọi spec guest/negative sẽ chạy trên phiên ĐÃ đăng nhập (false negative).
+    const context = await browser.newContext({
+      storageState: { cookies: [], origins: [] },
+    });
     await use(context);
     await context.close();
   },

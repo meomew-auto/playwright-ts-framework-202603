@@ -1,6 +1,26 @@
 # 📊 Progress: Bảng Theo Dõi Tiến Độ
 
 ## ✅ Đã Hoàn Thành (Done)
+- [x] **[2026-09-20] Spec Form Đăng nhập Neko Coffee (4 TC) + fix bug `guestContext`**:
+  - [x] Viết lại POM `NekoLoginPage.ts` theo `data-testid` thật; thêm `expectGuestHeaderState()`, `loginAndCaptureResponse()`, `trackLoginRequests()`, `getStoredAccessToken()`, `clearStoredSession()`.
+  - [x] Tạo spec `presentation/tests/neko/04-ui/login-form.spec.ts` (TC_01 UI contract, TC_02 401 + Zod ApiError + dialog, TC_03 HTML5 required không phát sinh request, TC_04 200 + Zod AuthTokenResponse + Integrity Check + teardown).
+  - [x] 🐞 Fix framework: `hybrid-auth.fixture.ts` → `guestContext` ép `storageState: { cookies: [], origins: [] }` (Playwright ≥ 1.63 tự tiêm `_combinedContextOptions` vào `browser.newContext()` thủ công).
+  - [x] Gia cố chống flake: `test.describe.configure({ timeout: 60_000 })` + `navigate()` chờ `waitForLoadState("load")` (hydration).
+  - [x] `npm run typecheck` → 0 error; `login-form.spec.ts --repeat-each=3` → **13 passed / 22.1s, 0 flake**; `responsive-navigation.spec.ts` vẫn pass.
+  - [x] A/B test bằng `git stash` chứng minh 4 test đỏ (`chat-realtime` 1 + `products-list` 3) là **pre-existing**, không do thay đổi lần này.
+  - [x] Cập nhật MCP Memory (`.agents/memory.json`): entities `NekoLoginPage`, `NekoAuthLoginApi`, `NekoKnownPreExistingFailures` + gotcha `_combinedContextOptions` trong `PlaywrightTSFramework`.
+
+- [x] **[2026-09-20] Refactor Evidence-Based `NekoHeaderNavigationPage` + spec ma trận viewport (Desktop 1280x800 / Mobile 375x667)**:
+  - [x] Probe DOM LIVE (script tạm + temp spec) → chốt contract thật: Hamburger `header-button-mobile-menu`, Nav Desktop `header-nav-order-tracking`, Drawer = `nav` chứa mốc `mobile-nav-home`, link Drawer không có testid ⇒ `getByRole("link", { name: "Tra cứu đơn", exact: true })`.
+  - [x] Viết lại POM: Locator Map + Inline Colocated Ternary (`this.isMobile()`), loại bỏ hoàn toàn selector legacy (`aside a, div[role='dialog'] a`, `header button.lg\:relative`) và Zero `locator.or()`.
+  - [x] Export 10 hằng số UI CONTRACT từ POM (path/label/heading/testid/URL pattern) để spec import lại, không hardcode.
+  - [x] Bổ sung semantic verifications: `expectDesktopHeaderContract()`, `expectMobileHeaderContract()`, `expectMobileDrawerOpened()`, `expectOnOrderTrackingPage()`, `openMobileDrawer()` (idempotent) + 3 alias tương thích ngược.
+  - [x] Viết lại spec: 3 describe (Desktop / Mobile / Dynamic Breakpoint), `test.use({ viewport })` + `test.describe.configure({ timeout: 60_000 })`, 5 TC, Zero raw locator & Zero `waitForTimeout`.
+  - [x] Dọn sạch artefact tạm: `scripts/_tmp-neko-header-probe.mjs`, `scripts/_probe-out.txt`, `src/presentation/tests/neko/04-ui/_tmp-probe.spec.ts`.
+  - [x] `npx tsc --noEmit` → 0 error; `npx playwright test responsive-navigation.spec.ts --project=neko-ui --reporter=list` → **6 passed (setup + TC_01→TC_05), 9.5s**.
+  - [x] Cập nhật MCP Memory: entity `NekoHeaderNavigationPage` (xóa observation legacy sai, thêm 6 observation 2026-09-20) + `PlaywrightTSFramework` (gotcha `test.use({ viewport })` tiêm được vào `guestContext`).
+
+
 - [x] Kiến trúc Core BasePage & Locator Map Pattern.
 - [x] TableColumnHelpers & CollectionHelper.
 - [x] 6-Contract Super Fixture cho CMS và Neko Coffee.

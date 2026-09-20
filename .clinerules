@@ -1,26 +1,133 @@
-# 🤖 ROO CODE & CLINE OPERATING RULES (ENTERPRISE PLAYWRIGHT)
+# Cline Workspace Rules — Extensible Playwright TypeScript Multi-Domain Framework
 
-You are an expert Automation QA Architect working on this repository.
-You MUST ALWAYS adhere strictly to the following rules and workflows:
+> **CRITICAL FOR CLINE**: This repository is an enterprise-grade, domain-driven Playwright + TypeScript test platform.
+> You must strictly adhere to all architecture principles, locator rules, fixture usage, and coding guidelines defined below on EVERY turn.
 
-## 1. 🧠 Memory Bank Lifecycle (MANDATORY)
-At the START of every task:
-- You MUST ALWAYS read `memory-bank/activeContext.md` and `memory-bank/systemPatterns.md` to recall project status and architecture principles.
+---
 
-At the END of every task (BEFORE completing):
-- You MUST AUTOMATICALLY update `memory-bank/activeContext.md` (Recent changes, current focus, next steps) and `memory-bank/progress.md` (Task completion checklist).
-- NEVER wait for the user to ask you to update the Memory Bank.
+## Scope
 
-## 2. 🏛️ Core Architecture Rules (from AGENTS.md)
-- **100% Domain Fixtures**: Always import `test, expect` from `@fixtures/<domain>`. NEVER import from `@playwright/test`.
-- **Zero Raw Locators**: Specs only orchestrate user journeys. All locators must reside in Page Object `pageLocators`.
-- **Responsive Locators**: NEVER use `locator.or()` or action `if-else`. Always use Inline Colocated Ternary `this.isMobile() ? mobile : desktop` inside `pageLocators`.
-- **Zero Sleep**: NEVER use `waitForTimeout`. Use auto-waiting assertions or `waitForResponse`.
-- **Data Isolation**: Write tests (`.write.spec.ts`) must use timestamped data (`Date.now()`) and clean up in `finally`.
+This repository is an enterprise-grade, domain-driven Playwright + TypeScript test platform designed to scale across an arbitrary number of business domains (`cms`, `neko`, or any newly added domain such as `crm`, `banking`, `logistics`). 
 
-## 3. 🧠 Continuous MCP Memory & Self-Learning (MANDATORY)
-- **Start of Task**: ALWAYS query MCP memory first via `memory/search_nodes` (e.g. search keywords of the page/feature) to retrieve known URLs, selectors, and gotchas. DO NOT probe the live browser if knowledge already exists in memory!
-- **End of Task**: If you discover new real-world URLs (e.g. `/admin/coupons`), DOM elements, or edge cases/gotchas (e.g. 404 status, WebSocket delay), you MUST AUTOMATICALLY call `memory/add_observations` or `memory/create_entities` to persist this knowledge into `.agents/memory.json`. NEVER wait for the user to ask you to save it.
+All framework implementation resides under `src/infrastructure` and production specs under `src/presentation/tests`. All paths must use TypeScript path aliases declared in `tsconfig.json`.
 
-## 4. 🧪 Quality Baseline
+---
+
+## Mandatory Skills & Operational Playbooks
+
+Before designing, implementing, modifying, or debugging any Page Object Models (POM), API Object Models (AOM), Fixtures, Test Specs, or Scaffolding a new domain, AI Agents **MUST READ AND ADHERE TO THE PLAYBOOK** in skill `playwright-test-crafting` (`.agents/skills/playwright-test-crafting/SKILL.md`):
+- **Section 1 & 2**: Locator Map Pattern (`pageLocators`), `createLocatorGetter`, and `TableColumnHelpers` (`columnMapCache`).
+- **Section 1.1**: Responsive Locators (Inline Colocated Ternary with `this.isMobile()`). Prohibits `locator.or()` and action `if-else`.
+- **Section 3 & 4**: 3-Tier AOM (Clients ➔ Services ➔ Schemas) & The 5 Enterprise Hybrid E2E Dual-Engine Models.
+- **Section 6**: Domain Scaffolding Playbook (A-Z 4-Step Checklist for new domains like `crm`, `banking`, `logistics`).
+- **Section 7**: Flaky Test Diagnosis & Root Cause Taxonomy (Logger, Playwright Trace Viewer, Smart Report).
+- **Section 8**: Test Data Management Strategy (Static Catalog Pattern via `TestDataRepository.ts` vs Dynamic Factory + Sandwich Teardown).
+
+---
+
+## Architecture Principles
+
+### 1. Canonical Domain Directory Skeleton
+
+Any existing or newly scaffolded domain `<domain>` must adhere to the standardized 3-tier boundary:
+
+```
+src/infrastructure/
+├── api/
+│   ├── clients/<domain>/               # Endpoint transport (HTTP / Playwright request)
+│   ├── services/<domain>/              # High-level business operations
+│   └── schemas/<domain>/               # Zod validation & Payload factory models
+├── ui/
+│   └── pages/<domain>/                 # Page Object Models (must extend BasePage)
+└── fixtures/<domain>/
+    ├── <domain>-auth.fixture.ts        # Worker Scope RAM Snapshot (0ms) + guestPage
+    ├── <domain>-app.fixture.ts         # Page Object Model instances
+    ├── <domain>-services.fixture.ts    # API Service instances (if domain exposes APIs)
+    ├── <domain>-super-gatekeeper.fixture.ts # Single Entrypoint test runner
+    ├── index.ts                        # Barrel export: export { test, expect }
+    └── README.md                       # Role & fixture manifest specification
+```
+
+### 2. The 6-Contract Super Fixture Manifest
+
+Every domain fixture barrel (`@fixtures/<domain>`) MUST provide the following 6 core contracts:
+
+| Contract | Role / Scope | Purpose & Implementation Rule |
+| :--- | :--- | :--- |
+| `workerSnapshots` | Worker Scope (RAM) | Authenticate once per worker; store session/token in CPU RAM. Zero disk I/O per test. |
+| `page` | Test Scope (Default Authed) | Automatically inject default domain session into browser context before test starts. |
+| `guestContext` | Test Scope (Clean Context) | Dedicated `browser.newContext()` 100% clean, zero cookies, zero tokens, zero scripts. |
+| `guestPage` | Test Scope (Clean Page) | Isolated page on `guestContext` for Form Login, validation, 401/429, and guest flows. |
+| `loginPage` | Test Scope (Bound to Guest) | POM for login attached to `guestPage` to eliminate SPA auto-redirects. |
+| `uiSessions` & `apiSessions` | Test Scope | Named POMs and authenticated API clients/services matching domain roles. |
+
+### 3. Page Object Model & UI Locator Standards
+
+- **Zero Raw Locators in Specs**: Selectors and browser interactions MUST NEVER appear inside spec files. Specs only orchestrate user journeys.
+- **Locator Map Pattern (Mandatory)**: Every Page Object MUST declare locators in a `pageLocators` dictionary:
+  ```typescript
+  private readonly pageLocators = {
+    heading: (page: Page) => page.getByRole("heading", { name: "Title" }),
+    input: (page: Page) => page.getByPlaceholder("Search..."),
+    rowByCode: (page: Page, code: string) => page.locator(`tr:has-text("${code}")`),
+  };
+  public element = this.createLocatorGetter(this.pageLocators);
+  ```
+  Never define locators as separate instance variables in the constructor.
+- **Responsive Locators (Inline Colocated Ternary)**: When locators differ between Desktop and Mobile, NEVER branch with `if-else` in action methods and DO NOT use `locator.or()` (which crashes with Playwright Strict Mode Violation when both elements exist in DOM). Use inline ternary with `this.isMobile()` directly inside `pageLocators`:
+  ```typescript
+  private readonly pageLocators = {
+    menuBtn: (page: Page) =>
+      this.isMobile()
+        ? page.getByTestId("mobile-hamburger-btn")
+        : page.locator("header button.desktop-cart"),
+    navLink: (page: Page) =>
+      this.isMobile()
+        ? page.locator("aside a, div[role='dialog'] a").filter({ hasText: "Orders" })
+        : page.getByTestId("header-nav-orders"),
+  };
+  ```
+  Arrow functions capture lexical `this`, guaranteeing type-safe access to `this.isMobile()`. Action methods stay flat (`this.clickWithLog(this.element("menuBtn"))`).
+- **Table / DataGrid Integration**: Pages managing tables MUST use `TableColumnHelpers` (`createColumnMap`, `columnMapCache: ColumnMap | null = null`, `findRowByColumnValueSimple`). Never hardcode column indices (`td[2]`).
+- **Semantic Locators Priority**: Always prefer accessible locators:
+  1. `page.getByRole(...)`
+  2. `page.getByLabel(...)`
+  3. `page.getByTestId(...)` / `page.getByPlaceholder(...)`
+  4. Stable CSS classes or IDs (e.g. form controls, tables) only when semantic contract is absent.
+- **BasePage Inheritance**: Every Page Object must extend `BasePage` and implement `expectOnPage()` to verify entry assertions. Use `fillWithLog()` and `clickWithLog()` for user actions.
+- **Action Methods vs Verification Methods**: Expose business intent methods (`createProduct`, `filterByStatus`), and semantic verification methods (`expectProductExists`, `expectErrorMessageVisible`).
+
+### 4. API Object Model (AOM) & Enterprise Hybrid E2E Standards
+
+- **3-Tier API Architecture**:
+  - `api/clients/<domain>/`: Raw HTTP transport via `APIRequestContext`, returns `APIResponse`.
+  - `api/services/<domain>/`: Business workflows, response validation (`if (!res.ok()) throw ...`), token injection from RAM.
+  - `api/schemas/<domain>/`: Zod runtime contracts and payload factories (`createPayload()`).
+- **5 Enterprise Hybrid E2E Models (Super Fixture Dual-Engine)**:
+  1. *Fast-Forward API Seed ➔ UI Action*: Seed complex prerequisites in 100ms via API, skip tedious UI steps.
+  2. *UI Action ➔ API Database Integrity Check*: Audit database state via API backend to eliminate frontend "Optimistic UI" false positives.
+  3. *Dual-Role Parallel Collaboration*: Inject privileged API session (`authedStaffClient`) + clean guest browser (`guestPage`) concurrently without session collision.
+  4. *Reverse Network Audit & Zod Validation*: Catch user-triggered network requests via `page.waitForResponse()` and validate contracts against Zod schemas.
+  5. *Zero-Pollution Auto-Teardown (Sandwich 4-Step)*: API Seed (timestamped) ➔ UI Action ➔ Dual Verification ➔ API Cleanup in `finally`.
+
+### 5. Test Spec Rules & Fixture Entrypoint
+
+- **100% Domain Fixture Usage**: Business specs MUST import `test, expect` exclusively from that domain's fixture barrel:
+  ```typescript
+  import { test, expect } from "@fixtures/<domain>";
+  ```
+- **Strict Prohibition**: NEVER import `test` directly from `@playwright/test` in business specs. Never create manual `request.newContext()` or `browser.newContext()` in specs.
+- **Network Synchronization**: Synchronize using `Promise.all([page.waitForResponse(...), action])` or auto-waiting assertions (`toBeVisible`, `toHaveText`). NEVER use `waitForTimeout` or arbitrary sleeps.
+- **Data Isolation**: Tests must own their data using unique timestamps (`Date.now()`). Write tests (`.write.spec.ts`) must perform self-contained cleanup (`deleteProduct` + `expectNotExists`). Read tests (`.read.spec.ts`) must be parallel-safe.
+
+### 6. Continuous Self-Learning & MCP Memory Protocol
+- **Memory-First Discovery**: Before launching manual exploratory probes or scraping scripts, agents MUST query MCP Memory (`search_nodes`) to verify if the target page, endpoint, or gotcha has already been cataloged.
+- **Automatic Knowledge Harvesting**: When discovering new domain realities (e.g. real URLs like `/admin/<resource>`, table column definitions, 404 pending states, or API quirks), the agent MUST automatically call `memory/add_observations` or `memory/create_entities` to store these insights into `.agents/memory.json`. Do not wait for user prompts to preserve architectural memory.
+
+---
+
+## Quality Baseline
+
 - Run `npm run typecheck` after TypeScript changes (0 errors required).
+- Run the smallest relevant Playwright project before expanding to full suites.
+- Respect locked dependencies. Never commit `.env.*`, auth snapshots, or test reports.
