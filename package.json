@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
+    "test:heal": "node scripts/heal-runner.mjs",
     "test:dev": "cross-env NODE_ENV=development npx playwright test",
     "test:uat": "cross-env NODE_ENV=uat npx playwright test",
     "typecheck": "tsc --noEmit",

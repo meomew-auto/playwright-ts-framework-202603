@@ -37,6 +37,16 @@ export class NekoHeaderNavigationPage extends BasePage {
             .locator("aside a, div[role='dialog'] a, .space-y-1 a")
             .filter({ hasText: "Tra cứu đơn" })
         : page.getByTestId("header-nav-order-tracking"),
+
+    // 🎯 Landing Contract — Trang Tra cứu đơn hàng (/vi/order-tracking)
+    // Trang đích render phía client (SPA), dùng chung cho cả Desktop lẫn Mobile.
+    orderTrackingHeading: (page: Page) =>
+      page.getByRole("heading", { level: 1, name: "Tra cứu đơn hàng" }),
+    orderCodeInput: (page: Page) => page.getByLabel("Mã đơn hàng"),
+    phoneOrEmailInput: (page: Page) =>
+      page.getByLabel("Số điện thoại hoặc Email"),
+    submitTrackingButton: (page: Page) =>
+      page.getByRole("button", { name: "Tra cứu ngay" }),
   };
 
   public element = this.createLocatorGetter(this.pageLocators);
@@ -117,6 +127,40 @@ export class NekoHeaderNavigationPage extends BasePage {
   async expectNavigatedToOrderTracking(): Promise<void> {
     await expect(this.page).toHaveURL(/.*\/order-tracking.*/, {
       timeout: 15000,
+    });
+  }
+
+  /**
+   * 🖥️ Desktop Contract — Link "Tra cứu đơn" nằm TRỰC TIẾP trên thanh Header:
+   * - Hiển thị đúng nhãn người dùng ("Tra cứu đơn").
+   * - Trỏ tới đường dẫn /order-tracking (không cần mở Drawer trung gian như Mobile).
+   */
+  async expectDesktopOrderTrackingLinkContract(): Promise<void> {
+    const desktopLink = this.element("orderTrackingLink");
+    await expect(desktopLink).toBeVisible({ timeout: 10000 });
+    await expect(desktopLink).toHaveText(/Tra cứu đơn/i);
+    await expect(desktopLink).toHaveAttribute("href", /\/order-tracking\/?$/);
+  }
+
+  /**
+   * ✅ Xác thực đã hạ cánh đúng trang Tra cứu đơn hàng đã render đầy đủ (SPA client-side):
+   * URL /order-tracking + H1 tiêu đề + 2 trường nhập liệu + nút "Tra cứu ngay".
+   * Chặn bẫy "đổi URL nhưng React chưa hydrate" (false positive của Client-side Navigation).
+   */
+  async expectOnOrderTrackingPage(): Promise<void> {
+    await this.expectNavigatedToOrderTracking();
+    await this.verifyTextValues([
+      {
+        locator: this.element("orderTrackingHeading"),
+        expected: "Tra cứu đơn hàng",
+      },
+    ]);
+    await expect(this.element("orderCodeInput")).toBeVisible({ timeout: 10000 });
+    await expect(this.element("phoneOrEmailInput")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(this.element("submitTrackingButton")).toBeVisible({
+      timeout: 10000,
     });
   }
 }

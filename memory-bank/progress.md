@@ -15,6 +15,13 @@
   - [x] `npm run typecheck` → 0 error; `npx playwright test --project=neko-ui --list` → 45 tests / 6 files.
   - [x] Commit + push `origin/main` → `6829fe9` (56 file, +3110/−1658), working tree sạch.
 
+- [x] **[2026-09-16] Test case Desktop Click Tra cứu đơn (TC_04)**:
+  - [x] POM `NekoHeaderNavigationPage`: thêm 4 locators Landing Contract (`orderTrackingHeading`, `orderCodeInput`, `phoneOrEmailInput`, `submitTrackingButton`).
+  - [x] POM: thêm `expectDesktopOrderTrackingLinkContract()` + `expectOnOrderTrackingPage()` (semantic verification, zero raw locator trong spec).
+  - [x] Spec `responsive-navigation.spec.ts`: thêm TC_04 Desktop — verify nhãn + href Header link, click trực tiếp, verify trang đích render đầy đủ.
+  - [x] `npm run typecheck` → 0 error; chạy thật **5 passed** (`--project=neko-ui responsive-navigation.spec.ts`); `--list` → 47 tests / 6 files.
+  - [x] Cập nhật MCP Memory (`.agents/memory.json`): entities `NekoHeaderNavigationPage`, `NekoOrderTrackingPage` + gotcha 307 redirect `/` → `/vi`, SPA client-side nav.
+
 ## ⏳ Đang Thực Hiện (In Progress)
 - [ ] Hướng dẫn học viên trải nghiệm Roo Code Memory Bank.
 

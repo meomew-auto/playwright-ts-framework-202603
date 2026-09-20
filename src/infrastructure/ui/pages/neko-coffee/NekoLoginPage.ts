@@ -11,14 +11,24 @@ import { EnvManager } from "@utils/EnvManager";
  */
 export class NekoLoginPage extends BasePage {
   private readonly pageLocators = {
-    usernameInput: (page: Page) => page.locator("#username"),
-    passwordInput: (page: Page) => page.locator("#password"),
-    loginButton: (page: Page) => page.locator("#btn-login"),
-    alertBox: (page: Page) => page.locator("#alert-box"),
+    usernameInput: (page: Page) =>
+      page.locator('[data-testid="login-input-username"], #username'),
+    passwordInput: (page: Page) =>
+      page.locator('[data-testid="login-input-password"], #password'),
+    loginButton: (page: Page) =>
+      page.locator(
+        '[data-testid="login-button-submit"], #btn-login, button[type="submit"]',
+      ),
+    loginForm: (page: Page) =>
+      page.locator('[data-testid="login-form"], form'),
+    alertBox: (page: Page) =>
+      page.locator(
+        '[data-testid="login-error-alert"], #alert-box, [role="alert"]',
+      ),
     loadingSpinner: (page: Page) =>
       page.locator(".spinner-border, #loading-spinner"),
     appHeader: (page: Page) =>
-      page.getByText("Neko Coffee Admin", { exact: false }),
+      page.getByText("Neko Coffee", { exact: false }),
   };
 
   public element = this.createLocatorGetter(this.pageLocators);

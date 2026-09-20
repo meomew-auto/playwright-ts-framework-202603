@@ -268,3 +268,4 @@ Mọi thắc mắc và tài liệu chi tiết vui lòng xem tại thư mục [`d
 - [`docs/01_CLEAN_ARCHITECTURE_GUIDE.md`](./docs/01_CLEAN_ARCHITECTURE_GUIDE.md): Nguyên lý Clean Architecture & IoC Fixtures.
 - [`docs/02_NETWORK_INTERCEPTION_DEEP_DIVE.md`](./docs/02_NETWORK_INTERCEPTION_DEEP_DIVE.md): Cẩm nang can thiệp mạng CDP Level.
 - [`docs/03_HYBRID_TESTING_SANDWICH_MODEL.md`](./docs/03_HYBRID_TESTING_SANDWICH_MODEL.md): Mô hình bánh kẹp & 3 Nấc xác thực.
+- [`docs/05_AI_AGENT_ENGINEERING_GUIDE.md`](./docs/05_AI_AGENT_ENGINEERING_GUIDE.md): Cẩm nang Kỹ thuật AI Agent: Rules, Skills, MCP Memory & Self-Healing Engine.
