@@ -1942,8 +1942,10 @@ Mở New Chat và gửi lệnh:
 ### 1. Mục tiêu kiểm chứng
 Kiểm chứng cơ chế tự học hỏi và duy trì tri thức liên phiên (Cross-session Continuity) thông qua MCP Memory Server và tệp đồ thị [`.agents/memory.json`](file:///e:/Khoa%20hoc/playwrigt-ts-framework-202603/.agents/memory.json).
 
-### 2. Hiện trạng thực tế trên Neko Coffee
-* **Trang Dead-link 404 thật**: `https://coffee.autoneko.com/admin/coupons` (Server Neko thực tế chưa phát triển trang này, trả về HTTP 404).
+#### 2. Hiện trạng thực tế trên Neko Coffee
+* **Tính năng Chat Trực tuyến có Gotcha kỹ thuật ngầm**: `https://coffee.autoneko.com/chat`.
+  - Kết nối qua WebSocket (`/ws/chat`, `/ws/online`). Khi vừa chuyển trang, user chưa thể online ngay mà cần 300ms - 800ms để bắt tay (handshake).
+  - Tri thức này đã được lưu trong `.agents/memory.json` (thực thể `NekoChatFeature`) để ngăn chặn kiểm thử viên viết code assert vội gây Flaky Test.
 * **OpenAPI Spec thật**: `https://api-neko-coffee.autoneko.com/openapi.json` chứa nhóm endpoint đơn hàng thật: `/api/orders/{id}/(confirm|approve|process|cancel|refund)`.
 
 ### 3. Chuẩn bị nhánh Git
@@ -1955,25 +1957,28 @@ git checkout -b practice/04-mcp-memory-harvesting
 
 #### 🔹 Vòng 1: Thử thách Memory-First Discovery (Tra cứu quá khứ)
 * **Prompt gửi cho Agent**:
-  > *"Hiện tại trang quản lý mã giảm giá (coupons) của Neko Coffee trạng thái kỹ thuật như thế nào? Đã có thể viết test tự động được chưa?"*
+  > *"Tôi chuẩn bị viết kịch bản kiểm thử tính năng Phòng chat trực tuyến của Neko Coffee (URL: `https://coffee.autoneko.com/chat`). Trong dự án đã có lưu ý hay gotcha kỹ thuật gì về tính năng này chưa?"*
 * **Phân tích Cơ chế "Dưới nắp ca-pô"**:
-  1. Thay vì gọi công cụ mở trình duyệt cào HTML tốn 30.000 tokens, Agent tuân thủ Rule 6 trong `AGENTS.md`: Gọi tool `call_mcp_tool` với `ServerName: "memory"` và gọi hàm `search_nodes({ query: "coupons" })` (tốn đúng **80 tokens**).
-  2. MCP Memory đọc tệp `.agents/memory.json` và trả về thực thể: `NekoAdminCouponsPage` kèm observation: *"Trang thai hien tai tren server: 404 Page Not Found (Under development)"*.
-  3. Agent trả lời ngay lập tức mà không cần chạm vào mạng hay trình duyệt:
-     > *"Trang `/admin/coupons` hiện là Dead-link (404 Page Not Found) do Backend chưa phát triển xong. Chưa thể viết kịch bản kiểm thử cho trang này."*
+  1. Thay vì cào quét DOM hay đọc mò toàn bộ mã nguồn tốn hàng chục nghìn tokens, Agent tuân thủ Rule 6 trong `AGENTS.md`: Gọi tool `call_mcp_tool` với `ServerName: "memory"` và gọi hàm `search_nodes({ query: "chat" })` (tốn đúng **~80 tokens**).
+  2. MCP Memory đọc tệp `.agents/memory.json` và trả về thực thể `NekoChatFeature` với các bài học kinh nghiệm xương máu:
+     - *"Sau khi navigate vào /chat, user chưa thể online ngay do WebSocket cần thời gian handshake 300ms-800ms."*
+     - *"Tuyệt đối không assert API /ws/online ngay lập tức sau navigate vì sẽ gây Flaky Test."*
+     - *"Bắt buộc dùng `await expect.poll(() => chatService.getOnlineUsers()).toContain('admin')` để retry polling cho đến khi WebSocket kết nối thành công."*
+  3. Agent lập tức đưa ra lời cảnh báo và hướng dẫn kỹ thuật chuẩn xác cho kỹ sư mà không cần chạy thử hay phỏng đoán mò mẫm!
 
 #### 🔹 Vòng 2: Thử thách Automatic Knowledge Harvesting (Ghi nhớ tương lai)
 * **Prompt gửi cho Agent**:
-  > *"Tôi vừa kiểm tra trên Swagger của Neko Coffee, Backend vừa bổ sung endpoint: `POST /api/orders/{id}/cancel` yêu cầu header `Authorization: Bearer <staffToken>` và body `{ reason: string }`. Hãy lưu tri thức này vào bộ não dài hạn của dự án."*
+  > *"Tôi vừa kiểm tra trên Swagger của Neko Coffee (`https://api-neko-coffee.autoneko.com/openapi.json`), Backend vừa bổ sung endpoint hủy đơn hàng: `POST /api/orders/{id}/cancel` yêu cầu header `Authorization: Bearer <staffToken>` và body `{ reason: string }`. Hãy lưu tri thức này vào bộ não dài hạn của dự án."*
 * **Phân tích Cơ chế "Dưới nắp ca-pô"**:
-  1. Agent gọi tool `call_mcp_tool` với hàm `create_entities` hoặc `add_observations`.
-  2. MCP Server mở tệp [`.agents/memory.json`](file:///e:/Khoa%20hoc/playwrigt-ts-framework-202603/.agents/memory.json) và append một dòng JSONL mới.
-  3. Mở tệp `.agents/memory.json` ra, bạn sẽ thấy thông tin về API `POST /api/orders/{id}/cancel` đã được lưu vĩnh viễn vào kho tri thức của dự án.
+  1. Agent nhận diện đây là tri thức kỹ thuật quan trọng của hệ thống backend.
+  2. Agent gọi tool `call_mcp_tool` với hàm `create_entities` hoặc `add_observations`.
+  3. MCP Server mở tệp [`.agents/memory.json`](file:///e:/Khoa%20hoc/playwrigt-ts-framework-202603/.agents/memory.json) và append tri thức mới về endpoint `POST /api/orders/{id}/cancel`.
+  4. Mở tệp `.agents/memory.json` ra, thông tin đã được khắc sâu vĩnh viễn vào bộ não dự án để mọi kỹ sư và phiên chat sau tự động hưởng lợi!
 
 ### 5. Tiêu chí nghiệm thu (Pass / Fail Checklist)
-- [ ] **PASS**: Agent trả lời chính xác trạng thái 404 mà không cần mở trình duyệt cào quét DOM.
-- [ ] **PASS**: Tệp `.agents/memory.json` xuất hiện thực thể hoặc ghi chú mới sau phiên chat.
-- [ ] **PASS**: Tri thức mới được lưu lại và dùng được cho các phiên chat tiếp theo.
+- [ ] **PASS**: Agent gọi tool `search_nodes({ query: "chat" })` và trả lời chính xác cảnh báo WebSocket handshake từ `.agents/memory.json`.
+- [ ] **PASS**: Tệp `.agents/memory.json` xuất hiện thực thể hoặc ghi chú mới về endpoint `/cancel` sau phiên chat thứ hai.
+- [ ] **PASS**: Tri thức mới được lưu lại và dùng được cho các phiên chat tiếp theo mà không bị mất đi khi tắt IDE.
 
 ---
 
