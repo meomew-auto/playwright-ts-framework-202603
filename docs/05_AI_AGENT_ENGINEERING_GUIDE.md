@@ -48,13 +48,14 @@
    - 6.2. Pipeline tự động hóa 4 bước của `heal-runner.mjs`
    - 6.3. Giải phẫu mã nguồn `scripts/heal-runner.mjs` (0 dependencies, Native Node.js)
 7. [CHƯƠNG 7: KỊCH BẢN THỰC NGHIỆM & QUY TRÌNH LIVE DEMO THỰC CHIẾN](#chương-7-kịch-bản-thực-nghiệm--quy-trình-live-demo-thực-chiến)
-   - 7.1. Bản đồ 5 Nhánh Git Thực chiến độc lập
+   - 7.1. Bản đồ 6 Nhánh Git Thực chiến độc lập
    - 7.2. Demo 1: Thử thách Bẫy Kỷ luật (AGENTS.md Rule Enforcement)
    - 7.3. Demo 2: Tự hành Kích hoạt Cẩm nang SKILLS (Responsive POM)
    - 7.4. Demo 3: Tác chiến Kép Hybrid E2E (Sandwich 4 bước)
    - 7.5. Demo 4: Bộ não dài hạn MCP Memory (Discovery & Harvesting)
    - 7.6. Demo 5: Đỉnh cao Tự chữa lành (Self-Healing AST Engine)
-   - 7.7. Bí kíp Quản trị Phiên Chat tối ưu Context cho Kỹ sư
+   - 7.7. Demo 6: Tái sử dụng POM có sẵn & Chống ảo giác (Zero-Hallucination POM Extension)
+   - 7.8. Bí kíp Quản trị Phiên Chat tối ưu Context cho Kỹ sư
 8. [CHƯƠNG 8: TỔNG HỢP 10 CÂU HỎI THƯỜNG GẶP & KHẮC PHỤC SỰ CỐ (FAQ & TROUBLESHOOTING)](#chương-8-tổng-hợp-10-câu-hỏi-thường-gặp--khắc-phục-sự-cố-faq--troubleshooting)
 
 ---
@@ -1719,7 +1720,7 @@ Mỗi bài Demo được thiết kế gắn liền với **1 nhánh Git độc l
 
 ---
 
-## 7.1. Bản đồ 5 Nhánh Git Thực chiến độc lập
+## 7.1. Bản đồ 6 Nhánh Git Thực chiến độc lập
 
 | Bài Demo | Nhánh Git riêng biệt | Phân hệ kiểm chứng | Thử thách cốt lõi |
 | :---: | :--- | :--- | :--- |
@@ -1728,6 +1729,7 @@ Mỗi bài Demo được thiết kế gắn liền với **1 nhánh Git độc l
 | **Demo 3** | `practice/03-hybrid-sandwich-model` | **Dual-Engine (Super Fixture)** | Kiểm chứng kịch bản Hybrid E2E 4 bước (Sandwich Model): API Seed ➔ UI Action ➔ Zod Audit ➔ Finally Teardown. |
 | **Demo 4** | `practice/04-mcp-memory-harvesting` | **MCP Memory (Bộ não dài hạn)** | Kiểm chứng quy trình Memory-First Discovery và cơ chế tự động ghi nhớ tri thức mới vào `.agents/memory.json`. |
 | **Demo 5** | `practice/05-self-healing-engine` | **Self-Healing AST Engine** | Cố tình làm gãy locator và chạy lệnh `npm run test:heal` để chứng kiến Playwright tự động vá file `.ts`. |
+| **Demo 6** | `practice/06-pom-reuse-zero-hallucination` | **Extend, do NOT Recreate** | Yêu cầu viết test case mới dựa trên POM có sẵn mà không được tự ý bịa method hay selector thô. |
 
 ---
 
@@ -2040,7 +2042,85 @@ Màn hình Terminal sẽ lần lượt hiển thị các bước tự chữa là
 
 ---
 
-## 7.7. Bí kíp Quản trị Phiên Chat tối ưu Context cho Kỹ sư
+## 7.7. Demo 6: Tái sử dụng POM có sẵn & Chống ảo giác (Zero-Hallucination POM Extension)
+
+### 1. Mục tiêu kiểm chứng
+Kiểm chứng năng lực **"Inspect before acting"** (Khảo sát trước - Viết test sau) của AI Agent theo nguyên lý *Extend, do NOT Recreate*. 
+Thử thách này đo lường xem Agent có tự giác đọc file Page Object Model đã có sẵn trong codebase để tái sử dụng chính xác các method và locator thật, hay sẽ mắc "bệnh ảo giác" (Hallucination) tự bịa ra các hàm không tồn tại như `searchOrder()`, `clickFilter()`.
+
+### 2. Hiện trạng thực tế trên Codebase
+* **Page Object thật có sẵn**: [`NekoAdminOrdersPage.ts`](file:///e:/Khoa%20hoc/playwrigt-ts-framework-202603/src/infrastructure/ui/pages/neko-coffee/NekoAdminOrdersPage.ts) (đã tích hợp `TableColumnHelpers`).
+* **Fixture thật tương ứng**: `adminOrdersPage` được cung cấp qua Super Fixture `@fixtures/neko`.
+* **Danh mục các action & verification methods THẬT trong class**:
+  - `navigate()`: Mở màn hình quản trị đơn hàng (`https://coffee.autoneko.com/admin/orders`).
+  - `expectOnPage()`: Xác thực bảng và các nút chức năng sẵn sàng.
+  - `filterByKeyword(keyword: string)`: Nhập từ khóa tìm kiếm vào ô `Tìm nhanh...`.
+  - `findOrderRowByCode(orderCode: string)`: Dùng `findRowByColumnValueSimple` tìm dòng theo mã đơn.
+  - `getOrderRowData(orderCode: string)`: Trích xuất toàn bộ dữ liệu sạch của dòng đó thành Object.
+  - `resetFilter()`: Bấm nút "Đặt lại bộ lọc" để phục hồi dữ liệu ban đầu.
+  - `getAllOrdersTableData()`: Trích xuất mảng dữ liệu toàn bộ bảng.
+* **File Test Spec đích**: [`src/presentation/tests/neko/04-ui/orders-table.spec.ts`](file:///e:/Khoa%20hoc/playwrigt-ts-framework-202603/src/presentation/tests/neko/04-ui/orders-table.spec.ts).
+
+### 3. Chuẩn bị nhánh Git
+```bash
+git checkout -b practice/06-pom-reuse-zero-hallucination
+```
+
+### 4. Câu lệnh Prompt Thực chiến
+Mở một phiên Chat mới (**New Task / New Chat**) và paste câu lệnh sau:
+
+> *"Trong dự án đã có sẵn Page Object Model `adminOrdersPage` (`NekoAdminOrdersPage.ts`) quản lý màn hình Quản lý đơn hàng. Hãy khảo sát file POM này và viết thêm 1 test case mới vào file `orders-table.spec.ts` kiểm tra luồng nghiệp vụ sau: Mở trang đơn hàng ➔ Lọc đơn theo từ khóa mã đơn `#B2C-SEED-0100` ➔ Xác thực dòng đơn hàng xuất hiện và trạng thái hiển thị đúng ➔ Bấm Đặt lại bộ lọc để phục hồi danh sách toàn bộ đơn hàng. BẮT BUỘC tái sử dụng 100% các method có sẵn trong POM, tuyệt đối không bịa method mới và không viết raw locators!"*
+
+### 5. Phân tích Cơ chế "Dưới nắp ca-pô" (Under the hood)
+* **Quá trình suy nghĩ (ReAct Loop) & Hành vi chuẩn mực**:
+  1. Agent nhận prompt và nhận diện yêu cầu: Cần viết test cho màn hình Admin Orders bằng cách dùng POM `adminOrdersPage`.
+  2. Agent tuân thủ Rule 2 *(Inspect before acting)*: Thay vì tự suy đoán API method rồi gõ code bừa, Agent lập tức phát lệnh tool call:
+     `view_file({ AbsolutePath: "src/infrastructure/ui/pages/neko-coffee/NekoAdminOrdersPage.ts" })`.
+  3. Sau khi đọc POM, Agent bóc tách được các chữ ký hàm thực tế:
+     - Thấy hàm `filterByKeyword(keyword)` ➔ Không bịa ra `searchOrder()` hay `inputKeyword()`.
+     - Thấy hàm `findOrderRowByCode(orderCode)` ➔ Không tự viết selector thô `page.locator('tr:has-text(...)')`.
+     - Thấy hàm `resetFilter()` ➔ Không tự click `button:has-text('Reset')`.
+     - Thấy hàm `getAllOrdersTableData()` ➔ Tái sử dụng để kiểm tra số lượng dòng sau khi reset.
+* **Mã nguồn Agent sinh ra (Expected Code)**:
+  ```typescript
+  import { test, expect } from "@fixtures/neko";
+
+  test("TC_Filter: Lọc đơn theo mã và phục hồi bảng qua adminOrdersPage", async ({
+    adminOrdersPage,
+  }) => {
+    // 1. Mở trang quản lý đơn hàng
+    await adminOrdersPage.navigate();
+    await adminOrdersPage.expectOnPage();
+
+    // 2. Lọc đơn theo từ khóa mã đơn có sẵn
+    const targetCode = "#B2C-SEED-0100";
+    await adminOrdersPage.filterByKeyword(targetCode);
+
+    // 3. Xác thực dòng đơn hàng xuất hiện trên bảng (TableColumnHelpers)
+    const orderRow = await adminOrdersPage.findOrderRowByCode(targetCode);
+    await expect(orderRow).toBeVisible({ timeout: 10000 });
+
+    // 4. Trích xuất dữ liệu sạch để kiểm toán
+    const orderData = await adminOrdersPage.getOrderRowData(targetCode);
+    expect(orderData["mãĐơn"]).toContain(targetCode);
+
+    // 5. Đặt lại bộ lọc và xác nhận bảng đã phục hồi danh sách đầy đủ
+    await adminOrdersPage.resetFilter();
+    const restoredOrders = await adminOrdersPage.getAllOrdersTableData();
+    expect(restoredOrders.length).toBeGreaterThan(1);
+  });
+  ```
+
+### 6. Tiêu chí nghiệm thu (Pass / Fail Checklist)
+- [ ] **PASS**: Trong lịch sử Tool Calls, thấy Agent gọi lệnh `view_file` khảo sát `NekoAdminOrdersPage.ts` trước khi sinh mã nguồn.
+- [ ] **PASS**: Không xuất hiện bất kỳ method ảo (hallucinated methods) nào ngoài danh mục method thực tế của class.
+- [ ] **PASS**: Tuyệt đối không viết raw selector (`page.locator`, `page.fill`) trong spec file.
+- [ ] **PASS**: Chạy `npm run typecheck` đạt 0 lỗi biên dịch ngay lần chạy đầu tiên.
+- [ ] **PASS**: Chạy lệnh test thực tế: `npx playwright test orders-table.spec.ts --project=neko-ui` Pass xanh 100%.
+
+---
+
+## 7.8. Bí kíp Quản trị Phiên Chat tối ưu Context cho Kỹ sư
 
 Để làm chủ và điều phối AI Coding Agent với hiệu suất cao nhất, kỹ sư cần nắm vững 3 nguyên tắc vận hành:
 
