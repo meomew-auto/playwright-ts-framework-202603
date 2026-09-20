@@ -24,13 +24,17 @@ Mỗi domain barrel (`@fixtures/<domain>`) cung cấp đủ 6 hợp đồng:
 ```typescript
 private readonly pageLocators = {
   heading: (page: Page) => page.getByRole('heading', { name: 'Title' }),
-  menuBtn: (page: Page) =>
+  // Responsive: ternary inline + lexical `this` (arrow function)
+  orderTrackingLink: (page: Page) =>
     this.isMobile()
-      ? page.getByTestId('header-button-mobile-menu')
-      : page.locator('header button.lg\\:relative'),
+      ? this.mobileDrawerScope(page).getByRole('link', { name: 'Tra cứu đơn', exact: true })
+      : page.getByTestId('header-nav-order-tracking'),
 };
 public element = this.createLocatorGetter(this.pageLocators);
 ```
+- Nếu một khối element phức tạp (vd Drawer) không có `role`/`data-testid` ở container: tạo **private scope helper**
+  bám vào một mốc DUY NHẤT bên trong (`page.locator('nav').filter({ has: page.getByTestId('mobile-nav-home') })`)
+  rồi tái sử dụng cho mọi locator con — thay vì dựng chuỗi CSS `aside a, div[role=dialog] a, .space-y-1 a` phỏng đoán.
 
 ## 4. Responsive Locators (Inline Colocated Ternary)
 - **Tuyệt đối cấm**: `locator.or()` (gây lỗi Strict Mode Violation khi cả 2 elements cùng tồn tại trong DOM).
@@ -38,6 +42,16 @@ public element = this.createLocatorGetter(this.pageLocators);
 - `BasePage.isMobile()` tự động nhận diện cả fixture `viewportType` lẫn `viewportSize().width < 1024`.
 - POM có thể **override `mobileBreakpoint`** khi layout thật dùng breakpoint khác Tailwind (`lg`/`xl`).
   Ví dụ: sidebar Admin của Neko Coffee là `hidden xl:flex` ⇒ POM đặt `mobileBreakpoint = 1280` (breakpoint `xl`).
+- **Bằng chứng DOM (Neko Header, 2026-09-20)**: Nav Desktop (`hidden lg:flex`) và Hamburger (`lg:hidden`)
+  **cùng nằm trong DOM ở MỌI viewport** — đây là lý do cứng khiến `.or()` không thể dùng. Vì vậy POM phải có
+  cặp verification khóa contract: `expectDesktopHeaderContract()` / `expectMobileHeaderContract()` assert
+  `not.toBeVisible()` cho nhánh còn lại (`toBeAttached()` cho nhánh bị ẩn ⇒ chứng minh nó VẪN tồn tại).
+- **Ma trận viewport trong spec**: dùng `test.use({ viewport: { width: 1280, height: 800 } })` theo `describe`
+  (Desktop) và `{ width: 375, height: 667 }` (Mobile) + assert `guestPage.viewportSize()`.
+  Playwright tiêm `viewport` từ `_combinedContextOptions` vào cả `guestContext` do fixture tạo thủ công
+  (cùng cơ chế đã gặp với `storageState`) ⇒ KHÔNG cần rải `setViewportSize()` khắp spec.
+  Chỉ dùng `page.setViewportSize()` trong test **Dynamic Breakpoint** (đổi viewport giữa luồng, không reload):
+  khi đó ternary tự chuyển nhánh vì `this.isMobile()` được đánh giá lại tại đúng lúc gọi `this.element(...)`.
 
 ## 5. UI Contract (Hợp đồng giao diện) — Nguồn sự thật duy nhất
 Mỗi POM màn hình dữ liệu khai báo hằng số export ở đầu file, spec import lại thay vì hardcode text:
